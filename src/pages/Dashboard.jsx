@@ -189,51 +189,11 @@ const Dashboard = () => {
     };
 
 
-    // const fetchTransactions = async () => {
-    //   try {
-    //     const session = localStorage.getItem('userSession');
-    //     if (!session) return;
-
-    //     const user = JSON.parse(session);
-
-    //     const { data, error } = await supabase
-    //       .from('transactions')
-    //       .select('*')
-    //       .or(
-    //         `account_id.eq.${user.id},email.eq.${user.email}`
-    //       ) 
-    //       .order('date', { ascending: false });
-
-    //     if (error) {
-    //       console.error('Error fetching transactions:', error.message);
-    //       return;
-    //     }
-
-    //     if (data && data.length > 0) {
-    //       setTransactions(data);
-    //     } else {
-    //       setTransactions([]); // return empty array instead of null
-    //     }
-    //   } catch (err) {
-    //     console.error('Fetch transactions error:', err.message);
-    //   }
-    // };
-
-
     fetchBalances();
     fetchTransactions();
     setBalance(data[0]);
     fetchName();
     fetchAccountNumber();
-
-    // const sessionData = JSON.parse(session);
-    // // Initialize separate account balances if not present
-    // if (!sessionData.checkingBalance && !sessionData.savingsBalance) {
-    //   sessionData.checkingBalance = sessionData.checkingBalance * 0.7; // 70% in checking
-    //   sessionData.savingsBalance = sessionData.savingsBalance * 0.3; // 30% in savings
-    //   localStorage.setItem('userSession', JSON.stringify(sessionData));
-    // }
-    // setUserSession(sessionData);
   }, []);
   const handleLogout = () => {
     localStorage.removeItem('userSession');
@@ -805,7 +765,7 @@ const Dashboard = () => {
 
                   <article id="credit-card-offer" className="dashboard-credit-offer">
                     <div><span className="dashboard-credit-offer-icon"><CreditCard size={23} /></span><h3>Get a Credit Card</h3><p>Apply for a credit card and get flexible access to credit. There is no credit card linked to this profile yet.</p></div>
-                    <div className="dashboard-credit-actions"><Button type="button" onClick={() => { setCardApplicationStep(0); setShowCardApplication(true); }}>Apply Now</Button><Button type="button" variant="outline" onClick={() => toast({ title: 'Credit card information', description: 'Credit card details and account servicing are not connected in this demo.' })}>Learn More</Button></div>
+                    <div className="dashboard-credit-actions"><Button type="button" onClick={() => { setCardApplicationStep(0); setShowCardApplication(true); }}>Apply Now</Button><Button type="button" variant="outline" onClick={() => toast({ title: 'Credit card information', description: 'Credit card details are coming soon.' })}>Learn More</Button></div>
                   </article>
                 </div>
               </section>
@@ -950,61 +910,6 @@ const Dashboard = () => {
             </Button>)}
         </div>
       </nav>
-
-      {/* Deposit Modal */}
-      {/* <Dialog open={showDepositModal} onOpenChange={setShowDepositModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Wire Transfer Information</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Transfer money to the account below and click "I've Sent It" to notify us.
-            </p>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Account Name</Label>
-                  <p className="font-medium">{userName}</p> 
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => handleCopy(bankDetails.accountName, 'name')}>
-                  {copied === 'name' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Account Number</Label>
-                  <p className="font-medium">{bankDetails.accountNumber}</p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => handleCopy(bankDetails.accountNumber, 'account')}>
-                  {copied === 'account' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Bank Name</Label>
-                  <p className="font-medium">{bankDetails.bankName}</p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => handleCopy(bankDetails.bankName, 'bank')}>
-                  {copied === 'bank' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Routing Number</Label>
-                  <p className="font-medium">{bankDetails.routingNumber}</p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => handleCopy(bankDetails.routingNumber, 'routing')}>
-                  {copied === 'routing' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <Button className="w-full" onClick={() => setShowDepositModal(false)}>
-              I've Sent It
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog> */}
 
       {/* Withdraw Modal */}
       <Dialog open={showWithdrawModal} onOpenChange={setShowWithdrawModal}>

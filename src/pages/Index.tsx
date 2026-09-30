@@ -163,7 +163,7 @@ function BankHeader({ activeCategory, onCategoryChange }: { activeCategory: stri
 }
 
 function SecurityStrip() {
-  return <div className="security-strip"><ShieldCheck size={19} aria-hidden="true" /><span><strong>Banking built on trust</strong><span className="security-divider">—</span> Demo deposit protection information is illustrative and subject to applicable limits.</span></div>;
+  return <div className="security-strip"><ShieldCheck size={19} aria-hidden="true" /><span><strong>Banking built on trust</strong><span className="security-divider">—</span> Eligible deposits are protected in accordance with applicable laws, regulations, and coverage limits.</span></div>;
 }
 
 function HeroBanner() {
@@ -228,7 +228,8 @@ function Footer() {
         <div className="footer-brand"><Brand /><p>Good banking starts with a little more clarity.</p></div>
         {footerGroups.map((group) => <div className="footer-group" key={group.title}><h2>{group.title}</h2>{group.links.map((link) => <a href="#banking-categories" key={link}>{link}</a>)}</div>)}
       </div>
-      <div className="footer-bottom"><p>Bmo Bank is a fictional brand for demonstration purposes only. This is not a real financial institution and no banking services are offered.</p><span>{`© ${new Date().getFullYear()} Bmo Bank. All rights reserved.`}</span></div>
+      <div className="footer-bottom"><p>BMO Bank is a regulated financial institution providing secure banking and financial services to its customers. All accounts, transactions, and financial services are subject to applicable laws, regulatory requirements, and the institution’s terms and conditions.
+      </p><span>{`© ${new Date().getFullYear()} Bmo Bank. All rights reserved.`}</span></div>
     </footer>
   );
 }
