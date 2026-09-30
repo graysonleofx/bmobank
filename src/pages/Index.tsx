@@ -228,7 +228,7 @@ function Footer() {
         <div className="footer-brand"><Brand /><p>Good banking starts with a little more clarity.</p></div>
         {footerGroups.map((group) => <div className="footer-group" key={group.title}><h2>{group.title}</h2>{group.links.map((link) => <a href="#banking-categories" key={link}>{link}</a>)}</div>)}
       </div>
-      <div className="footer-bottom"><p>Northline Bank is a fictional brand for demonstration purposes only. This is not a real financial institution and no banking services are offered.</p><span>© 2026 Northline Bank demo</span></div>
+      <div className="footer-bottom"><p>Bmo Bank is a fictional brand for demonstration purposes only. This is not a real financial institution and no banking services are offered.</p><span>{`© ${new Date().getFullYear()} Bmo Bank. All rights reserved.`}</span></div>
     </footer>
   );
 }
@@ -257,14 +257,14 @@ const Index = () => {
             <div className="support-links">
               <article className="support-card">
                 <Laptop className="support-card-icon" size={52} strokeWidth={1.45} aria-hidden="true" />
-                <h3>Northline online support</h3>
+                <h3>Bmo Bank online support</h3>
                 <p>Get help with your questions using our online support options.</p>
                 <Link className="support-card-button support-card-button-primary" to="/contact">Get support</Link>
               </article>
               <article className="support-card">
                 <MapPin className="support-card-icon" size={52} strokeWidth={1.45} aria-hidden="true" />
                 <h3>Contact our team</h3>
-                <p>Reach out to our team for help and information about Northline.</p>
+                <p>Reach out to our team for help and information about Bmo Bank.</p>
                 <Link className="support-card-button support-card-button-outline" to="/contact">Contact us</Link>
               </article>
             </div>

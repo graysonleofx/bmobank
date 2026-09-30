@@ -44,9 +44,9 @@ const Footer = () => {
           <div className="col-span-2">
             <div className="flex items-center space-x-2 mb-6">
               {/* <div className="h-8 w-8 rounded-lg bg-gradient-accent"></div>
-              <span className="text-xl font-bold">Smart Bank</span> */}
+              <span className="text-xl font-bold">Bmo Bank</span> */}
               <img src={brand} alt="Bank Logo" className="w-16 h-14 rounded-lg bg-slate-200" />
-              <span className="text-xl font-bold">Federal Edge Finance</span>
+              <span className="text-xl font-bold">Bmo Bank</span>
             </div>
             <p className="text-primary-foreground/80 leading-relaxed mb-6 max-w-md">
               Empowering individuals and businesses with cutting-edge digital banking solutions. 
@@ -138,7 +138,7 @@ const Footer = () => {
         {/* Bottom section */}
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-primary-foreground/60 text-sm">
-            © 2025 Federal Edge Finance. All rights reserved.
+            {`© ${new Date().getFullYear()} Bmo Bank. All rights reserved.`}
           </p>
           <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <span className="text-primary-foreground/60 text-sm">
