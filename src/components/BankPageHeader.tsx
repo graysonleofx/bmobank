@@ -30,7 +30,7 @@ const BankPageHeader = ({ page }: BankPageHeaderProps) => {
     <header className="bank-page-header">
       <div className="bank-page-utility">
         <Link to="/" className="bank-page-personal">Personal <ChevronDown size={14} aria-hidden="true" /></Link>
-        <Link to="/contact" className="bank-page-contact-link">Contact Bmo Bank</Link>
+        <Link to="/contact" className="bank-page-contact-link">Contact us</Link>
       </div>
       <div className="bank-page-header-main">
         <Brand />
