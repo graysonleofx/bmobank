@@ -78,8 +78,8 @@ const ContactUs = () => {
   };
 
   const contactDetails = {
-    phone: '+1 (555) 123-4567',
-    email: 'customerservice@bmo.com',
+    phone: '+1 (000) 000-0000',
+    email: 'contact-us@brnobank.com',
     address: '123 Finance Drive, Suite 400, Melbourne VIC 3000, Australia',
     hours: [
       { days: 'Mon - Fri', times: '9:00 AM - 6:00 PM' },
