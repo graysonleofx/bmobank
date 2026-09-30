@@ -79,7 +79,7 @@ const ContactUs = () => {
 
   const contactDetails = {
     phone: '+1 (555) 123-4567',
-    email: 'customerservice@federaledgefinance.com',
+    email: 'customerservice@bmo.com',
     address: '123 Finance Drive, Suite 400, Melbourne VIC 3000, Australia',
     hours: [
       { days: 'Mon - Fri', times: '9:00 AM - 6:00 PM' },
@@ -94,7 +94,7 @@ const ContactUs = () => {
       <main className="northline-page-content northline-contact-layout" id="contact">
           {/* Form card */}
           <div className="northline-contact-panel">
-            <h1 className="northline-contact-title">Contact Northline</h1>
+            <h1 className="northline-contact-title">Contact Bmo Bank</h1>
             <p className="northline-contact-intro">We'd love to help. Send us a message and our team will get back to you within one business day.</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">

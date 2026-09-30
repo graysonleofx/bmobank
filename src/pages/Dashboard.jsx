@@ -269,7 +269,7 @@ const Dashboard = () => {
   const bankDetails = {
     accountName: "Smart Digital Bank",
     accountNumber: "3032410090",
-    bankName: "Federal Edge Finance Bank",
+    bankName: "BMO Bank",
     routingNumber: "021000021"
   };
   const showDashboardSection = (sectionId) => {
@@ -571,7 +571,7 @@ const Dashboard = () => {
         {mobileSidebarOpen && <>
           <button type="button" className="dashboard-mobile-backdrop md:hidden" aria-label="Close dashboard menu" onClick={() => setMobileSidebarOpen(false)} />
           <aside className="dashboard-sidebar dashboard-mobile-sidebar md:hidden" aria-label="Dashboard menu">
-            <div className="dashboard-sidebar-brand"><img src={bankLogo} alt="Federal Edge Finance" /><span>Federal Edge Finance</span></div>
+            <div className="dashboard-sidebar-brand"><img src={bankLogo} alt="BMO Bank" /><span>BMO Bank</span></div>
             <p className="dashboard-sidebar-caption">Banking</p>
             <nav className="dashboard-sidebar-nav" aria-label="Mobile dashboard navigation">{renderSidebarItems()}</nav>
             <div className="dashboard-sidebar-bottom">
@@ -779,7 +779,7 @@ const Dashboard = () => {
                       <div className="bg-gradient-primary p-4 md:p-6 rounded-lg text-white">
                         <div className="flex justify-between items-start mb-6 md:mb-8">
                           <div>
-                            <p className="text-sm opacity-80">Federal Edge Finance</p>
+                            <p className="text-sm opacity-80">BMO Bank</p>
                             <p className="text-xs opacity-60">Virtual Debit Card</p>
                           </div>
                           <div className="text-right">

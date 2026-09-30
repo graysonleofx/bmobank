@@ -11,11 +11,11 @@ const navigation = ['Checking & Savings', 'Credit Cards', 'Loans', 'Mortgages', 
 
 function Brand() {
   return (
-    <Link to="/" className="bank-page-brand" aria-label="Northline Bank home">
+    <Link to="/" className="bank-page-brand" aria-label="Bmo Bank home">
       {/* <span className="bank-page-brand-mark" aria-hidden="true"><Landmark size={20} /></span>
-      <span>northline<span>bank</span></span> */}
+      <span>bmo<span>bank</span></span> */}
 
-      <img src="https://www.bmo.com/dist/images/logos/bmo-blue-on-transparent-en.svg" alt="Northline Bank" width="100" height="40" />
+      <img src="https://www.bmo.com/dist/images/logos/bmo-blue-on-transparent-en.svg" alt="Bmo Bank" width="100" height="40" />
     </Link>
   );
 }
@@ -30,7 +30,7 @@ const BankPageHeader = ({ page }: BankPageHeaderProps) => {
     <header className="bank-page-header">
       <div className="bank-page-utility">
         <Link to="/" className="bank-page-personal">Personal <ChevronDown size={14} aria-hidden="true" /></Link>
-        <Link to="/contact" className="bank-page-contact-link">Contact Northline</Link>
+        <Link to="/contact" className="bank-page-contact-link">Contact Bmo Bank</Link>
       </div>
       <div className="bank-page-header-main">
         <Brand />
