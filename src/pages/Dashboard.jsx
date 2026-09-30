@@ -11,10 +11,12 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import ProfileSection from '@/components/ProfileSection.jsx';
 import SupportSection from '@/components/SupportSection';
 import { useToast } from '@/hooks/use-toast';
-import { Home, CreditCard, ArrowDownToLine, ArrowUpFromLine, Send, User, HelpCircle, LogOut, Bell, Eye, EyeOff, Gift, Settings, Copy, Check } from 'lucide-react';
+import { Home, CreditCard, ArrowDownToLine, ArrowUpFromLine, Send, User, HelpCircle, LogOut, Bell, Eye, EyeOff, Gift, Settings, Copy, Check, Menu, X, Wallet, ArrowLeftRight, Receipt, PiggyBank, CircleDollarSign, TrendingUp, ChevronRight, ArrowUpRight, ArrowDownRight, ShieldCheck } from 'lucide-react';
 import supabase from  '../lib/supabaseClient';
 import { data } from 'autoprefixer';
 import ChequeDepositForm from '@/components/ChequeDepositForm';
+import bankLogo from '@/assets/bank.png';
+import './Dashboard.css';
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,6 +35,10 @@ const Dashboard = () => {
   const [otpValue, setOtpValue] = useState('');
   const [copied, setCopied] = useState('');
   const [showReferralCard, setShowReferralCard] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [transactionFilter, setTransactionFilter] = useState('all');
+  const [showCardApplication, setShowCardApplication] = useState(false);
+  const [cardApplicationStep, setCardApplicationStep] = useState(0);
   const [referralCodeCopied, setReferralCodeCopied] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -266,31 +272,20 @@ const Dashboard = () => {
     bankName: "Federal Edge Finance Bank",
     routingNumber: "021000021"
   };
-  const sidebarItems = [{
-    id: 'home',
-    label: 'Home',
-    icon: Home
-  }, {
-    id: 'transactions',
-    label: 'Transactions',
-    icon: CreditCard
-  }, {
-    id: 'deposit',
-    label: 'Deposit',
-    icon: ArrowDownToLine
-  }, {
-    id: 'withdraw',
-    label: 'Withdraw',
-    icon: ArrowUpFromLine
-  }, {
-    id: 'profile',
-    label: 'Profile',
-    icon: User
-  }, {
-    id: 'support',
-    label: 'Support',
-    icon: HelpCircle
-  }];
+  const showDashboardSection = (sectionId) => {
+    setActiveTab('home');
+    setMobileSidebarOpen(false);
+    window.setTimeout(() => document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+  };
+  const sidebarItems = [{ id: 'home', label: 'Dashboard', icon: Home, action: () => { setActiveTab('home'); setMobileSidebarOpen(false); } },
+    { id: 'accounts', label: 'Accounts', icon: Wallet, action: () => showDashboardSection('account-summary') },
+    { id: 'transfers', label: 'Transfers', icon: ArrowLeftRight, action: () => navigate('/transfer') },
+    { id: 'payments', label: 'Payments', icon: Receipt, action: () => navigate('/transfer') },
+    { id: 'transactions', label: 'Transactions', icon: CreditCard, action: () => { setActiveTab('transactions'); setMobileSidebarOpen(false); } },
+    { id: 'cards', label: 'Cards', icon: CreditCard, action: () => showDashboardSection('card-section') },
+    { id: 'savings', label: 'Savings', icon: PiggyBank, action: () => showDashboardSection('account-summary') },
+    { id: 'credit-card', label: 'Credit Card', icon: CircleDollarSign, action: () => showDashboardSection('credit-card-offer') },
+    { id: 'settings', label: 'Settings', icon: Settings, action: () => { setActiveTab('profile'); setMobileSidebarOpen(false); } }];
   const bottomNavItems = [{
     id: 'home',
     label: 'Home',
@@ -320,18 +315,55 @@ const Dashboard = () => {
       icon: HelpCircle
     }
   ];
+  const renderSidebarItems = () => sidebarItems.map(item => (
+    <button key={item.id} type="button" className={`dashboard-sidebar-link ${activeTab === item.id ? 'is-active' : ''}`} onClick={item.action}>
+      <item.icon aria-hidden="true" />
+      <span>{item.label}</span>
+    </button>
+  ));
   if (!userSession) {
     return <div>Loading...</div>;
   }
+  const checkingBalance = Number(balance?.checking_account_balance ?? balance?.checking ?? 0) || 0;
+  const savingsBalance = Number(balance?.savings_account_balance ?? balance?.savings ?? 0) || 0;
+  const availableBalance = checkingBalance + savingsBalance;
+  const formatMoney = (amount) => `$${Number(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const transactionKind = (transaction) => {
+    const type = String(transaction.type || '').toLowerCase();
+    if (type.includes('transfer')) return 'transfers';
+    if (['credit', 'deposit', 'cheque_deposit'].includes(type) || Number(transaction.amount) > 0) return 'income';
+    return 'expenses';
+  };
+  const filteredTransactions = transactions.filter((transaction) => transactionFilter === 'all' || transactionKind(transaction) === transactionFilter);
+  const currentMonthTransactions = transactions.filter((transaction) => {
+    const date = new Date(transaction.date);
+    const now = new Date();
+    return !Number.isNaN(date.getTime()) && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  });
+  const monthlyIncome = currentMonthTransactions.filter((transaction) => transactionKind(transaction) === 'income').reduce((total, transaction) => total + Math.abs(Number(transaction.amount) || 0), 0);
+  const monthlySpending = currentMonthTransactions.filter((transaction) => transactionKind(transaction) === 'expenses').reduce((total, transaction) => total + Math.abs(Number(transaction.amount) || 0), 0);
+  const savingsShare = availableBalance > 0 ? Math.round((savingsBalance / availableBalance) * 100) : 0;
+  const spendingByMerchant = currentMonthTransactions.filter((transaction) => transactionKind(transaction) === 'expenses').reduce((groups, transaction) => {
+    const label = transaction.note || 'Other expense';
+    groups[label] = (groups[label] || 0) + Math.abs(Number(transaction.amount) || 0);
+    return groups;
+  }, {});
+  const spendingCategories = Object.entries(spendingByMerchant).sort((a, b) => b[1] - a[1]).slice(0, 3);
   // const checking = balance?.checking_account_balance  ?? 0;
   // const savings = balance?.savings_account_balance  ?? 0;
   return(
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="dashboard-shell pb-20 md:pb-0">
       {/* Top Bar */}
-        <header className="bg-card border-b px-4 py-3 md:py-4 flex items-center justify-between">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-base md:text-xl font-semibold text-primary truncate">Welcome back, {userName.split(' ')[0]}!</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">Account: {accountNumber}</p>
+        <header className="dashboard-topbar">
+          <div className="dashboard-header-leading">
+            {/* <Button type="button" variant="ghost" size="icon" className="dashboard-menu-toggle" aria-label={mobileSidebarOpen ? 'Close dashboard menu' : 'Open dashboard menu'} aria-expanded={mobileSidebarOpen} onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}>
+              {mobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button> */}
+            <div className="min-w-0">
+              <p className="dashboard-heading-kicker">Personal banking</p>
+              <h1 className="dashboard-heading-title">Dashboard</h1>
+              <p className="dashboard-heading-meta">Welcome back, {userName.split(' ')[0]} · Account {accountNumber}</p>
+            </div>
           </div>
 
           {/* Profile avatar with preview + change (saves to & retrieves from Supabase) */}
@@ -500,8 +532,10 @@ const Dashboard = () => {
             </div>
           </details>
 
-          <div className="flex items-center space-x-2">
-            {/* notifications button (kept for layout) */} 
+          <div className="dashboard-header-actions">
+            <Button type="button" variant="ghost" size="icon" className="dashboard-header-icon" aria-label="Notifications" onClick={() => toast({ title: 'Notifications', description: 'Notification history is not available in this view yet.' })}>
+              <Bell className="h-5 w-5" />
+            </Button>
 
             {/* Mobile: icon-only logout */}
             <Button
@@ -522,42 +556,72 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="flex">
+        <div className="dashboard-layout">
           {/* Desktop Sidebar */}
-        <aside className="hidden md:block w-64 bg-card border-r min-h-screen p-4">
-          <div className="space-y-2">
-            {sidebarItems.map(item => <Button key={item.id} variant={activeTab === item.id ? "secondary" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab(item.id)}>
-                <item.icon className="h-4 w-4 mr-2" />
-                {item.label}
-              </Button>)}
+        <aside className="dashboard-sidebar hidden md:flex" aria-label="Dashboard sidebar">
+          <div ><img src="https://www.bmo.com/dist/images/logos/bmo-blue-on-transparent-en.svg" alt="BMO Bank"  width="100" height="40" /></div>
+          <p className="dashboard-sidebar-caption">Banking</p>
+          <nav className="dashboard-sidebar-nav" aria-label="Dashboard navigation">{renderSidebarItems()}</nav>
+          <div className="dashboard-sidebar-bottom">
+            <button type="button" className="dashboard-sidebar-link" onClick={() => setActiveTab('support')}><HelpCircle aria-hidden="true" /><span>Support</span></button>
+            <button type="button" className="dashboard-sidebar-link" onClick={handleLogout}><LogOut aria-hidden="true" /><span>Sign out</span></button>
           </div>
         </aside>
 
+        {mobileSidebarOpen && <>
+          <button type="button" className="dashboard-mobile-backdrop md:hidden" aria-label="Close dashboard menu" onClick={() => setMobileSidebarOpen(false)} />
+          <aside className="dashboard-sidebar dashboard-mobile-sidebar md:hidden" aria-label="Dashboard menu">
+            <div className="dashboard-sidebar-brand"><img src={bankLogo} alt="Federal Edge Finance" /><span>Federal Edge Finance</span></div>
+            <p className="dashboard-sidebar-caption">Banking</p>
+            <nav className="dashboard-sidebar-nav" aria-label="Mobile dashboard navigation">{renderSidebarItems()}</nav>
+            <div className="dashboard-sidebar-bottom">
+              <button type="button" className="dashboard-sidebar-link" onClick={() => { setActiveTab('support'); setMobileSidebarOpen(false); }}><HelpCircle aria-hidden="true" /><span>Support</span></button>
+              <button type="button" className="dashboard-sidebar-link" onClick={handleLogout}><LogOut aria-hidden="true" /><span>Sign out</span></button>
+            </div>
+          </aside>
+        </>}
+
         {/* Main Content */}
-        <main className="flex-1 p-3 md:p-6 max-w-full overflow-x-hidden">
+        <main className="dashboard-main max-w-full overflow-x-hidden">
           {activeTab === 'home' && <div className="space-y-4 md:space-y-6">
               {/* Referral Stats */}
               
 
               {/* Account Balances */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-base md:text-lg">Checking Account</CardTitle>
-                        <CardDescription className="text-xs md:text-sm">Daily spending</CardDescription>
+                        <CardTitle className="text-base md:text-lg">
+                          Checking Account
+                        </CardTitle>
+                        <p className="text-sm text-primary font-medium">
+                          Referral code copied!
+                        </p>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => setShowBalance(!showBalance)}>
-                        {showBalance ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowBalance(!showBalance)}
+                      >
+                        {showBalance ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </CardHeader>
+
                   <CardContent className="pt-0">
                     <div className="text-xl md:text-2xl font-bold text-primary">
-                      {showBalance ? `$${balance?.checking_account_balance?.toLocaleString() || 0}` : '••••••'}
+                      {showBalance
+                        ? `$${balance?.checking_account_balance?.toLocaleString() || 0}`
+                        : '••••••'}
                     </div>
-                  </CardContent> 
+                  </CardContent>
                 </Card>
 
                 <Card>
@@ -578,10 +642,10 @@ const Dashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              </div> */}
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4">
+              {/* <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4">
                 <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleDepositClick}>
                   <CardContent className="p-3 md:p-6 text-center">
                     <ArrowDownToLine className="h-6 w-6 md:h-8 md:w-8 mx-auto mb-2 text-banking-blue" />
@@ -605,43 +669,13 @@ const Dashboard = () => {
                     <p className="text-xs md:text-sm text-muted-foreground">Send money</p>
                   </CardContent>
                 </Card>
-              </div>
+              </div> */}
 
               {/* Virtual Card Display */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base md:text-lg">Your Virtual Card</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-gradient-primary p-4 md:p-6 rounded-lg text-white">
-                    <div className="flex justify-between items-start mb-6 md:mb-8">
-                      <div>
-                        <p className="text-sm opacity-80">Federal Edge Finance</p>
-                        <p className="text-xs opacity-60">Virtual Debit Card</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm">••••</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-base md:text-lg font-mono">•••• •••• •••• {accountNumber ? String(accountNumber).slice(-4) : 'XXXX'}</p>
-                      <div className="flex justify-between">
-                        <div>
-                          <p className="text-xs opacity-60">CARDHOLDER</p>
-                          <p className="text-sm md:text-base font-semibold">{userName.toUpperCase()}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs opacity-60">EXPIRES</p>
-                          <p className="text-sm md:text-base font-semibold">12/27</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              
 
               {/* Recent Transactions */}
-              <Card>
+              {/* <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base md:text-lg">Recent Transactions</CardTitle>
                 <CardDescription className="text-xs md:text-sm">Your latest account activity</CardDescription>
@@ -688,55 +722,93 @@ const Dashboard = () => {
                 </div>
                 )}
               </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Referral Widget */}
-              <Card>
-                <CardContent className="p-4 md:p-6 mb-4" style={{marginBottom: '60px'}}>
-                  <div className="flex items-center space-x-3 md:space-x-4">
-                    <Gift className="h-6 w-6 md:h-8 md:w-8 text-accent flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm md:text-base font-semibold">Refer a friend, earn $5,000</h3>
-                      <p className="text-xs md:text-sm text-muted-foreground">Share your referral code and earn rewards</p>
+              
+              <section id="account-summary" aria-labelledby="account-summary-title">
+                {/* <div className="dashboard-section-heading">
+                  <div><h2 id="account-summary-title">Financial overview</h2><p>Your balances across connected accounts</p></div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setActiveTab('transactions')}>View activity <ChevronRight className="ml-1 h-4 w-4" /></Button>
+                </div> */}
+                <div className="dashboard-summary-grid">
+                  <article className="dashboard-summary-card dashboard-summary-card-primary">
+                    <div className="dashboard-summary-inner">
+                      <div className="dashboard-summary-top"><span className="dashboard-summary-label">Available balance</span><button type="button" className="dashboard-balance-visibility" aria-label={showBalance ? 'Hide balances' : 'Show balances'} onClick={() => setShowBalance(!showBalance)}>{showBalance ? <EyeOff size={17} /> : <Eye size={17} />}</button></div>
+                      <div><p className="dashboard-summary-amount">{showBalance ? formatMoney(availableBalance) : '••••••'}</p><p className="dashboard-summary-caption">Across your connected accounts</p></div>
                     </div>
-                    <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => setShowReferralCard(!showReferralCard)}>
-                      Share Code
-                    </Button>
-                  </div>
-                  
-                  {/* Referral Program Card - Shows at bottom when Share Code is clicked */}
-                  {showReferralCard && <div className="mt-6 p-4 bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10 rounded-lg">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-                    <div className="text-center p-3 bg-background rounded-lg">
-                      <p className="text-lg font-bold text-primary font-mono">REF-{userSession.accountNumber}</p>
-                      <p className="text-xs text-muted-foreground">Referral Code</p>
+                  </article>
+                  {/* <article className="dashboard-summary-card">
+                    <div className="dashboard-summary-inner"><div className="dashboard-summary-top"><span className="dashboard-summary-label">Total savings</span><span className="dashboard-summary-icon"><PiggyBank /></span></div><div><p className="dashboard-summary-amount">{showBalance ? formatMoney(savingsBalance) : '••••••'}</p><p className="dashboard-summary-caption">Long-term savings</p></div></div>
+                  </article> */}
+                  <article className="dashboard-summary-card">
+                    <div className="dashboard-summary-inner"><div className="dashboard-summary-top"><span className="dashboard-summary-label">Current account</span><span className="dashboard-summary-icon"><Wallet /></span></div><div><p className="dashboard-summary-amount">{showBalance ? formatMoney(checkingBalance) : '••••••'}</p><p className="dashboard-summary-caption">Everyday spending</p></div></div>
+                  </article>
+                  <article className="dashboard-summary-card">
+                    <div className="dashboard-summary-inner"><div className="dashboard-summary-top"><span className="dashboard-summary-label">Savings account</span><span className="dashboard-summary-icon"><TrendingUp /></span></div><div><p className="dashboard-summary-amount">{showBalance ? formatMoney(savingsBalance) : '••••••'}</p><p className="dashboard-summary-caption">Available to save</p></div></div>
+                  </article>
+                </div>
+              </section>
+
+              {/* Quick Actions */}
+              <section aria-labelledby="quick-actions-title">
+                <div className="dashboard-section-heading"><div><h2 id="quick-actions-title">Quick actions</h2><p>Move money and manage your day-to-day banking</p></div></div>
+                <div className="dashboard-action-grid">
+                  <button type="button" className="dashboard-action-button" onClick={handleDepositClick}><span className="dashboard-action-icon"><ArrowDownToLine /></span><span className="dashboard-action-label">Add money</span></button>
+                  <button type="button" className="dashboard-action-button" onClick={() => navigate('/transfer')}><span className="dashboard-action-icon"><Send /></span><span className="dashboard-action-label">Send money</span></button>
+                  <button type="button" className="dashboard-action-button" onClick={() => navigate('/withdraw')}><span className="dashboard-action-icon"><ArrowUpFromLine /></span><span className="dashboard-action-label">Cash out / withdraw</span></button>
+                </div>
+              </section>
+
+              {/* Cards */}
+              <section id="card-section" aria-labelledby="card-section-title">
+                <div className="dashboard-section-heading"><div><h2 id="card-section-title">Cards</h2><p>Your debit card and credit options</p></div></div>
+                <div className="dashboard-feature-grid">
+                  {/* <article className="dashboard-debit-card">
+                    <div className="dashboard-debit-card-inner">
+                      <div className="flex items-start justify-between"><div><p className="text-sm font-semibold">Federal Edge Finance</p><p className="mt-1 text-xs opacity-75">Virtual debit card</p></div><CreditCard className="h-6 w-6 opacity-90" /></div>
+                      <div className="dashboard-card-chip" aria-hidden="true" />
+                      <div><p className="font-mono text-lg tracking-wider">•••• •••• •••• {accountNumber ? String(accountNumber).slice(-4) : '••••'}</p><div className="mt-4 flex items-end justify-between"><div><p className="text-[10px] uppercase opacity-70">Cardholder</p><p className="mt-1 text-sm font-semibold">{userName.toUpperCase()}</p></div><ShieldCheck className="h-5 w-5 opacity-80" /></div></div>
                     </div>
-                    <div className="text-center p-3 bg-background rounded-lg">
-                      <p className="text-lg font-bold text-primary">3</p>
-                      <p className="text-xs text-muted-foreground">People Referred</p>
-                    </div>
-                    <div className="text-center p-3 bg-background rounded-lg">
-                      <p className="text-lg font-bold text-accent">$15,000</p>
-                      <p className="text-xs text-muted-foreground">Total Earnings</p>
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <Button onClick={handleReferralCodeCopy} variant="outline" size="sm" className="w-full">
-                      {referralCodeCopied ? <>
-                        <Check className="w-4 h-4 mr-2" />
-                        Copied!
-                        </> : <>
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copy Code
-                        </>}
-                      </Button>
-                    </div>
-                    </div>
-                    {referralCodeCopied && <div className="mt-3 text-center">
-                      <p className="text-sm text-primary font-medium">Referral code copied!</p>
-                    </div>}
-                  </div>}
-                </CardContent>
-              </Card>
+                  </article> */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base md:text-lg">Your Virtual Card</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="bg-gradient-primary p-4 md:p-6 rounded-lg text-white">
+                        <div className="flex justify-between items-start mb-6 md:mb-8">
+                          <div>
+                            <p className="text-sm opacity-80">Federal Edge Finance</p>
+                            <p className="text-xs opacity-60">Virtual Debit Card</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm">••••</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-base md:text-lg font-mono">•••• •••• •••• {accountNumber ? String(accountNumber).slice(-4) : 'XXXX'}</p>
+                          <div className="flex justify-between">
+                            <div>
+                              <p className="text-xs opacity-60">CARDHOLDER</p>
+                              <p className="text-sm md:text-base font-semibold">{userName.toUpperCase()}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs opacity-60">EXPIRES</p>
+                              <p className="text-sm md:text-base font-semibold">12/27</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <article id="credit-card-offer" className="dashboard-credit-offer">
+                    <div><span className="dashboard-credit-offer-icon"><CreditCard size={23} /></span><h3>Get a Credit Card</h3><p>Apply for a credit card and get flexible access to credit. There is no credit card linked to this profile yet.</p></div>
+                    <div className="dashboard-credit-actions"><Button type="button" onClick={() => { setCardApplicationStep(0); setShowCardApplication(true); }}>Apply Now</Button><Button type="button" variant="outline" onClick={() => toast({ title: 'Credit card information', description: 'Credit card details and account servicing are not connected in this demo.' })}>Learn More</Button></div>
+                  </article>
+                </div>
+              </section>
             </div>}
 
           {activeTab === 'transactions' && <div className="space-y-4">
@@ -775,7 +847,6 @@ const Dashboard = () => {
                             day: 'numeric',
                           }) : ''}
                         </TableCell>
-
                         <TableCell className="text-xs md:text-sm">{transaction.note}</TableCell>
                         <TableCell className="text-xs md:text-sm hidden md:table-cell">
                           <Badge variant={transaction.type === 'credit' ? 'default' : 'secondary'} className="text-xs">
@@ -783,7 +854,7 @@ const Dashboard = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className={`text-xs md:text-sm ${colorClass}`}>
-                          {sign}${Math.abs(transaction.amount).toLocaleString()} 
+                          {sign}${Math.abs(transaction.amount).toLocaleString()}
                         </TableCell>
                         <TableCell>
                           <Badge variant={transaction.status === 'completed' || transaction.status === 'approved' ? 'default' : transaction.status === 'rejected' ? 'destructive' : 'secondary'} className={transaction.status === 'completed' || transaction.status === 'approved' ? 'text-white' : transaction.status === 'rejected' ? '' : 'text-yellow-600'}>
@@ -792,7 +863,7 @@ const Dashboard = () => {
                         </TableCell>
                       </TableRow>
                     );
-                  })} 
+                  })}
                 </TableBody>
                 </Table>
               </div>
@@ -813,93 +884,38 @@ const Dashboard = () => {
             </div>
 
             {depositMethod === 'cheque' ? <ChequeDepositForm userName={userName} accountNumber={accountNumber} onSubmitted={(transaction) => setTransactions((current) => [transaction, ...current])} /> : <>
-                        
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base md:text-lg">Wire Transfer Information</CardTitle>
-                <CardDescription className="text-xs md:text-sm">
-                Use the details below to transfer funds to your account
-                </CardDescription>
+                <CardDescription className="text-xs md:text-sm">Use the details below to transfer funds to your account</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-3">
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
-                  <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Account Name</Label>
-                  <p className="font-semibold text-sm md:text-base">{userName}</p>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex-1"><Label className="text-xs text-muted-foreground uppercase tracking-wide">Account Name</Label><p className="font-semibold text-sm md:text-base">{userName}</p></div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(bankDetails.accountName, 'name')}>{copied === 'name' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}</Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(bankDetails.accountName, 'name')}>
-                  {copied === 'name' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
-                  <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Account Number</Label>
-                  <p className="font-semibold text-sm md:text-base font-mono">{accountNumber}</p>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex-1"><Label className="text-xs text-muted-foreground uppercase tracking-wide">Account Number</Label><p className="font-semibold text-sm md:text-base font-mono">{accountNumber}</p></div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(bankDetails.accountNumber, 'account')}>{copied === 'account' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}</Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(bankDetails.accountNumber, 'account')}>
-                  {copied === 'account' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
-                  <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Bank Name</Label>
-                  <p className="font-semibold text-sm md:text-base">{bankDetails.bankName}</p>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex-1"><Label className="text-xs text-muted-foreground uppercase tracking-wide">Bank Name</Label><p className="font-semibold text-sm md:text-base">{bankDetails.bankName}</p></div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(bankDetails.bankName, 'bank')}>{copied === 'bank' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}</Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(bankDetails.bankName, 'bank')}>
-                  {copied === 'bank' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
-                  <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Routing Number</Label>
-                  <p className="font-semibold text-sm md:text-base font-mono">{bankDetails.routingNumber}</p>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex-1"><Label className="text-xs text-muted-foreground uppercase tracking-wide">Routing Number</Label><p className="font-semibold text-sm md:text-base font-mono">{bankDetails.routingNumber}</p></div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(bankDetails.routingNumber, 'routing')}>{copied === 'routing' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}</Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy(bankDetails.routingNumber, 'routing')}>
-                  {copied === 'routing' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
-                  <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">SWIFT Code</Label>
-                  <p className="font-semibold text-sm md:text-base font-mono">FANBUS33</p>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex-1"><Label className="text-xs text-muted-foreground uppercase tracking-wide">SWIFT Code</Label><p className="font-semibold text-sm md:text-base font-mono">FANBUS33</p></div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy('FANBUS33', 'swift')}>{copied === 'swift' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}</Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleCopy('FANBUS33', 'swift')}>
-                  {copied === 'swift' ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  </Button>
+                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/20"><Label className="text-xs text-muted-foreground uppercase tracking-wide">Reference Note</Label><p className="font-semibold text-sm md:text-base text-primary">Deposit to Account: {accountNumber}</p><p className="text-xs text-muted-foreground mt-1">Include this reference in your transfer</p></div>
                 </div>
-                
-                <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Reference Note</Label>
-                  <p className="font-semibold text-sm md:text-base text-primary">
-                  Deposit to Account: {accountNumber}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                  Include this reference in your transfer
-                  </p>
-                </div>
-                </div>
-                
                 <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                <div className="flex items-start space-x-2">
-                  <div className="w-4 h-4 rounded-full bg-amber-500 mt-0.5 shrink-0"></div>
-                  <div>
-                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Important Instructions</p>
-                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                    Transfer funds to the account above and click "I've Sent It" to notify us. 
-                    Processing typically takes 1-3 business days.
-                  </p>
-                  </div>
+                  <div className="flex items-start space-x-2"><div className="w-4 h-4 rounded-full bg-amber-500 mt-0.5 shrink-0" /><div><p className="text-sm font-medium text-amber-800 dark:text-amber-200">Important Instructions</p><p className="text-xs text-amber-700 dark:text-amber-300 mt-1">Transfer funds to the account above and click &quot;I've Sent It&quot; to notify us. Processing typically takes 1-3 business days.</p></div></div>
                 </div>
-                </div>
-                
-                {/* <Button className="w-full mt-4" size="lg">
-                I've Sent It
-                </Button> */}
               </CardContent>
             </Card>
             </>}
@@ -926,7 +942,7 @@ const Dashboard = () => {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-pb">
+      <nav className="dashboard-mobile-bottom-nav md:hidden safe-area-pb" aria-label="Mobile bottom navigation">
         <div className="flex items-center justify-around py-2 px-1">
           {bottomNavItems.map(item => <Button key={item.id} variant="ghost" className={`flex flex-col items-center gap-1 h-auto py-2 px-2 min-w-0 flex-1 ${activeTab === item.id ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`} onClick={() => item.action ? item.action() : setActiveTab(item.id)}>
               <item.icon className="h-5 w-5 flex-shrink-0" />

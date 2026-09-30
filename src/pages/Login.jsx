@@ -10,7 +10,7 @@ import { Lock, Eye, EyeOff } from 'lucide-react';
 import supabase from '@/lib/supabaseClient';
 import {sendOtp} from '../lib/sendOtp'
 import { verifyOtp } from '../lib/verifyOtp';
-import Header from '@/components/Header';
+import BankPageHeader from '@/components/BankPageHeader';
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
@@ -155,14 +155,13 @@ const Login = () => {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary">
-      <Header />
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-md mx-auto">
-          <Card>
+    <div className="northline-page">
+      <BankPageHeader page="login" />
+      <main className="northline-page-content northline-auth-layout">
+          <Card className="northline-auth-panel">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl text-primary">Welcome Back</CardTitle>
-              <CardDescription>Sign in to your Federal Edge Finance account</CardDescription>
+              <CardDescription>Sign in to your Northline Bank account</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={ (e) => {
@@ -206,12 +205,12 @@ const Login = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground bg-secondary p-3 rounded-lg">
+                <div className="northline-security-note flex items-center space-x-2 text-sm text-muted-foreground bg-secondary p-3 rounded-lg">
                   <Lock className="w-4 h-4" />
                   <span>Your connection is encrypted and secure</span>
                 </div>
 
-                <Button type="submit" variant="hero" className="w-full" size="lg" id="login-button">
+                <Button type="submit" variant="hero" className="northline-primary-button w-full" size="lg" id="login-button">
                   Log In Securely
                 </Button>
               </form>
@@ -229,7 +228,7 @@ const Login = () => {
                   </p>
                   <Button 
                     variant="outline" 
-                    className="w-full"
+                    className="northline-outline-button w-full"
                     onClick={() => navigate('/open-account')}
                   >
                     Create Account
@@ -238,8 +237,7 @@ const Login = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+      </main>
 
       {/* Login OTP Modal */}
       <Dialog open={showLoginOtp} onOpenChange={setShowLoginOtp}>

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
-import Header from '@/components/Header';
+import BankPageHeader from '@/components/BankPageHeader';
 import supabase from '../lib/supabaseClient';
 import {useToast} from '@/hooks/use-toast';
 
@@ -358,11 +358,10 @@ const OpenAccount = () => {
 
   if (accountCreated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary">
-        <Header />
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-md mx-auto">
-            <Card className="text-center">
+      <div className="northline-page">
+        <BankPageHeader page="signup" />
+        <main className="northline-page-content northline-auth-layout">
+            <Card className="northline-success-panel text-center">
               <CardHeader>
                 <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                   <CheckCircle className="w-8 h-8 text-green-600" />
@@ -380,18 +379,16 @@ const OpenAccount = () => {
                 </Button>
               </CardContent>
             </Card>
-          </div>
-        </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary">
-      <Header />
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-md mx-auto">
-          <Card>
+    <div className="northline-page">
+      <BankPageHeader page="signup" />
+      <main className="northline-page-content northline-auth-layout">
+          <Card className="northline-auth-panel">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl text-primary">Open Your Free Digital Account</CardTitle>
               <CardDescription>Join thousands of users banking smart with us</CardDescription>
@@ -524,12 +521,12 @@ const OpenAccount = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground bg-secondary p-3 rounded-lg">
+                <div className="northline-security-note flex items-center space-x-2 text-sm text-muted-foreground bg-secondary p-3 rounded-lg">
                   <Lock className="w-4 h-4" />
                   <span>Your details are encrypted and secure</span>
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" id="openAccountButton">
+                <Button type="submit" className="northline-primary-button w-full" size="lg" id="openAccountButton">
                   Open Account
                 </Button>
               </form>
@@ -544,8 +541,7 @@ const OpenAccount = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+      </main>
     </div>
   );
 };

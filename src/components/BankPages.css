@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+.bank-page-header,
+.bank-page-header *,
+.northline-page,
+.northline-page * { box-sizing: border-box; }
+.bank-page-header { position: relative; z-index: 5; background: #fff; color: #062b45; font-family: 'DM Sans', 'Segoe UI', sans-serif; }
+.bank-page-header a { color: inherit; text-decoration: none; }
+.bank-page-header a:focus-visible,
+.bank-page-header button:focus-visible { outline: 3px solid #f2b544; outline-offset: 3px; }
+.bank-page-utility { height: 42px; display: flex; align-items: center; justify-content: space-between; padding: 0 max(32px, calc((100vw - 1200px) / 2)); border-bottom: 1px solid #d9dee3; background: #fbfcfd; color: #526575; font-size: 12px; }
+.bank-page-personal { display: inline-flex; align-items: center; gap: 8px; }
+.bank-page-contact-link { color: #0072ce !important; font-weight: 600; }
+.bank-page-header-main { width: min(1200px, 100%); min-height: 76px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+.bank-page-brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 10px; color: #062b45 !important; font-size: 22px; font-weight: 700; white-space: nowrap; }
+.bank-page-brand > span:last-child > span { margin-left: 4px; color: #0072ce; font-weight: 500; }
+.bank-page-brand-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: #0072ce; color: #fff; }
+.bank-page-desktop-nav { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: 16px; }
+.bank-page-desktop-nav a { position: relative; display: flex; min-height: 76px; align-items: center; color: #243b4b; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.bank-page-desktop-nav a::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; background: #0072ce; content: ''; transform: scaleX(0); transition: transform 180ms ease; }
+.bank-page-desktop-nav a:hover { color: #0072ce; }
+.bank-page-desktop-nav a:hover::after { transform: scaleX(1); }
+.bank-page-header-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
+.bank-page-secondary-action,
+.bank-page-primary-action { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border: 1px solid #0072ce; border-radius: 24px; color: #0072ce !important; font-size: 12px; font-weight: 700; white-space: nowrap; text-transform: uppercase; transition: background 160ms ease, color 160ms ease; }
+.bank-page-secondary-action:hover { background: #eef7fc; }
+.bank-page-primary-action { gap: 8px; background: #0072ce; color: white !important; }
+.bank-page-primary-action:hover { background: #005a8d; }
+.bank-page-primary-action.is-header-action { min-height: 40px; padding: 0 8px; border-color: transparent; border-radius: 0; background: transparent; color: #0072ce !important; gap: 7px; }
+.bank-page-primary-action.is-header-action:hover { background: transparent; color: #005a8d !important; }
+.bank-page-action-label-mobile { display: none; }
+.bank-page-menu-toggle { display: none; width: 40px; height: 40px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #062b45; cursor: pointer; }
+.bank-page-mobile-nav { display: none; }
+
+.northline-page { min-height: 100vh; background: #f5f7f8; color: #062b45; font-family: 'DM Sans', 'Segoe UI', sans-serif; }
+.northline-page-content { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 48px 0 72px; }
+.northline-auth-layout { width: min(570px, calc(100% - 36px)); }
+.northline-auth-panel,
+.northline-contact-panel,
+.northline-contact-info,
+.northline-success-panel { border: 1px solid #d9dee3 !important; border-radius: 6px !important; background: #fff !important; box-shadow: 0 5px 20px rgb(6 43 69 / 6%) !important; }
+.northline-auth-panel { padding: 8px 10px; }
+.northline-page [data-slot='card-header'] { gap: 7px; padding: 25px 22px 18px; }
+.northline-page [data-slot='card-title'] { color: #062b45; font-family: 'DM Sans', 'Segoe UI', sans-serif; font-size: 27px; line-height: 1.25; }
+.northline-page [data-slot='card-description'] { color: #596a78; font-size: 14px; }
+.northline-page [data-slot='card-content'] { padding: 0 22px 24px; }
+.northline-page label { color: #243b4b; font-size: 13px; font-weight: 600; }
+.northline-page input:not([type='checkbox']),
+.northline-page textarea { min-height: 44px; border: 1px solid #cbd5dc; border-radius: 4px; background: #fff; color: #062b45; font-family: 'DM Sans', 'Segoe UI', sans-serif; font-size: 14px; }
+.northline-page input::placeholder,
+.northline-page textarea::placeholder { color: #748493; }
+.northline-page input:focus-visible,
+.northline-page textarea:focus-visible { border-color: #0072ce; outline: 3px solid rgb(0 114 206 / 16%); outline-offset: 1px; }
+.northline-page .northline-primary-button { min-height: 48px; border-radius: 24px; background: #0072ce; color: #fff; font-weight: 700; }
+.northline-page .northline-primary-button:hover { background: #005a8d; }
+.northline-page .northline-outline-button { min-height: 44px; border: 1px solid #0072ce; border-radius: 24px; color: #0072ce; font-weight: 600; }
+.northline-page .northline-outline-button:hover { background: #eef7fc; }
+.northline-security-note { border: 1px solid #dfe8ed; border-radius: 4px !important; background: #f5f8fa !important; color: #425769 !important; }
+.northline-contact-layout { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr); align-items: start; gap: 28px; }
+.northline-contact-layout > * { min-width: 0; }
+.northline-contact-panel { padding: 30px; }
+.northline-contact-title { margin: 0 0 7px; color: #062b45; font-size: 29px; font-weight: 700; text-align: left; }
+.northline-contact-intro { margin: 0 0 24px; color: #596a78; font-size: 14px; line-height: 1.65; }
+.northline-contact-panel form { display: flex; flex-direction: column; gap: 17px; }
+.northline-contact-panel form > div,
+.northline-contact-panel form .grid > div { display: flex; flex-direction: column; gap: 6px; }
+.northline-contact-panel input,
+.northline-contact-panel textarea { width: 100%; padding: 11px 12px; box-shadow: none; }
+.northline-contact-panel textarea { min-height: 140px; resize: vertical; }
+.northline-contact-panel aside { color: #062b45; }
+.northline-contact-info { padding: 24px; }
+.northline-contact-info a { overflow-wrap: anywhere; }
+.northline-contact-info h3 { margin: 0 0 8px; color: #062b45; font-size: 21px; font-weight: 700; }
+.northline-contact-info > p { color: #596a78; line-height: 1.6; }
+.northline-contact-info li span:first-child { border-radius: 4px !important; background: #eaf4fa !important; color: #0072ce !important; }
+.northline-contact-map { overflow: hidden; border: 1px solid #d9dee3; border-radius: 6px; background: #fff; box-shadow: 0 5px 20px rgb(6 43 69 / 6%); }
+.northline-contact-map iframe { display: block; max-width: 100%; border: 0; }
+.northline-success-panel { padding-top: 8px; }
+
+@media (max-width: 1000px) {
+  .bank-page-desktop-nav { gap: 11px; }
+  .bank-page-desktop-nav a { font-size: 12px; }
+  .bank-page-secondary-action { display: none; }
+}
+
+@media (max-width: 1100px) {
+  .bank-page-desktop-nav { display: none; }
+  .bank-page-menu-toggle { display: grid; }
+  .bank-page-mobile-nav { display: block; max-height: 0; overflow: hidden; border-top: 1px solid transparent; transition: max-height 220ms ease, border-color 180ms ease; }
+  .bank-page-mobile-nav a { min-height: 45px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 1px solid #edf0f2; color: #243b4b; font-size: 14px; }
+  .bank-page-mobile-nav.is-open { max-height: 270px; border-color: #d9dee3; }
+}
+
+@media (max-width: 760px) {
+  .bank-page-utility { height: 36px; padding: 0 20px; }
+  .bank-page-header-main { min-height: 66px; padding: 0 20px; }
+  .bank-page-brand { font-size: 20px; }
+  .bank-page-brand-mark { width: 34px; height: 34px; }
+  .bank-page-desktop-nav { display: none; }
+  .bank-page-header-actions { gap: 8px; }
+  .bank-page-header-actions > .bank-page-secondary-action { display: none; }
+  .bank-page-header-actions > .bank-page-primary-action { min-height: 38px; padding: 0 13px; font-size: 11px; }
+  .bank-page-header-actions > .bank-page-primary-action.is-header-action { min-height: 38px; padding: 0 4px; background: transparent; }
+  .bank-page-menu-toggle { display: grid; }
+  .bank-page-mobile-nav { display: block; max-height: 0; overflow: hidden; border-top: 1px solid transparent; transition: max-height 220ms ease, border-color 180ms ease; }
+  .bank-page-mobile-nav a { min-height: 45px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 1px solid #edf0f2; color: #243b4b; font-size: 14px; }
+  .bank-page-mobile-nav.is-open { max-height: 270px; border-color: #d9dee3; }
+  .northline-page-content { width: min(100% - 36px, 700px); padding: 32px 0 52px; }
+  .northline-auth-layout { width: calc(100% - 32px); }
+  .northline-contact-layout { grid-template-columns: 1fr; gap: 18px; }
+  .northline-contact-panel { padding: 23px 20px; }
+  .northline-contact-info { padding: 20px; }
+}
+
+@media (max-width: 420px) {
+  .bank-page-utility { padding: 0 16px; }
+  .bank-page-header-main { gap: 8px; padding: 0 16px; }
+  .bank-page-brand { gap: 8px; font-size: 18px; }
+  .bank-page-header-actions > .bank-page-primary-action { min-height: 36px; padding: 0 10px; font-size: 10px; }
+  .bank-page-action-label-desktop { display: none; }
+  .bank-page-action-label-mobile { display: inline; }
+  .bank-page-menu-toggle { width: 36px; }
+  .northline-page-content { width: calc(100% - 28px); padding-top: 24px; }
+  .northline-auth-layout { width: calc(100% - 24px); }
+  .northline-auth-panel { padding: 4px; }
+  .northline-page [data-slot='card-header'] { padding: 22px 16px 14px; }
+  .northline-page [data-slot='card-content'] { padding: 0 16px 20px; }
+}

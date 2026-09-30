@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import emailjs from '@emailjs/browser';
 import { toast } from '../components/ui/use-toast';
-import Header from '@/components/Header';
+import BankPageHeader from '@/components/BankPageHeader';
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -89,14 +89,13 @@ const ContactUs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary">
-      <Header />
-      <div className="py-12 px-4 sm:px-6 lg:px-8 mt-12 mb-12" id="contact">
-        <div className="max-w-7xl mx-auto grid gap-8 grid-cols-1 lg:grid-cols-2 items-start">
+    <div className="northline-page northline-contact-page">
+      <BankPageHeader page="contact" />
+      <main className="northline-page-content northline-contact-layout" id="contact">
           {/* Form card */}
-          <div className="bg-secondary rounded-2xl shadow-lg p-8">
-            <h2 className="text-3xl font-extrabold mb-2 text-primary text-center">Contact Us</h2>
-            <p className="mb-6 text-center text-gray-600">We'd love to help — send us a message and we'll get back within one business day.</p>
+          <div className="northline-contact-panel">
+            <h1 className="northline-contact-title">Contact Northline</h1>
+            <p className="northline-contact-intro">We'd love to help. Send us a message and our team will get back to you within one business day.</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -194,7 +193,7 @@ const ContactUs = () => {
                 <button
                   type="submit"
                   disabled={isSending}
-                  className={`w-full flex items-center justify-center gap-3 rounded-lg py-3 text-white text-sm font-medium transition ${
+                  className={`northline-primary-button w-full flex items-center justify-center gap-3 rounded-lg py-3 text-white text-sm font-medium transition ${
                     isSending ? 'bg-primary/70 cursor-wait' : 'bg-primary hover:bg-primary-dark'
                   }`}
                 >
@@ -205,8 +204,8 @@ const ContactUs = () => {
           </div>
 
           {/* Info + Map panel */}
-          <aside className="space-y-6 lg:pt-8 mb-6">
-            <div className="bg-secondary rounded-2xl shadow-lg p-6">
+          <aside className="space-y-5">
+            <div className="northline-contact-info">
               <h3 className="text-2xl font-semibold text-primary mb-2">Our Location & Contact</h3>
               <p className="text-sm text-gray-600 mb-4">Reach out directly or visit our main branch during business hours.</p>
 
@@ -255,7 +254,7 @@ const ContactUs = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="northline-contact-map">
               <iframe
                 title="Bank Location"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3151.835434509374!2d144.9537353153166!3d-37.81627974202195!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6ad642af0f11fd81%3A0xf577d6a5b8b8b8b8!2sFederation%20Square!5e0!3m2!1sen!2sau!4v1614031234567!5m2!1sen!2sau"
@@ -267,8 +266,7 @@ const ContactUs = () => {
               />
             </div>
           </aside>
-        </div>
-      </div>
+      </main>
     </div>
   );
 };
