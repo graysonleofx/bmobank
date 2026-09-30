@@ -36,119 +36,6 @@ const OpenAccount = () => {
     return '3032' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
   };
 
-  // console.log('formData:', formData);
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if (formData.password !== formData.confirmPassword) {
-  //     toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
-  //     return;
-  //   }
-  //   if (formData.password.length < 8) {
-  //     toast({ title: "Error", description: "Password must be at least 8 characters", variant: "destructive" });
-  //     return;
-  //   }
-
-  //   if (!formData.fullName || !formData.email || !formData.phone || !formData.dateOfBirth) {
-  //     toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
-  //     return;
-  //   }
-    
-  //   if (formData.referralCode && !/^REF-\d{10}$/.test(formData.referralCode)) {
-  //     toast({ title: "Error", description: "Invalid referral code format", variant: "destructive" });
-  //     return;
-  //   }
-
-  //   if (formData.nationalId && !/^\d{9,15}$/.test(formData.nationalId)) {
-  //     toast({ title: "Error", description: "Invalid SSN format", variant: "destructive" });
-  //     return;
-  //   }
-
-  //   if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-  //     toast({ title: "Error", description: "Invalid email address", variant: "destructive" });
-  //     return;
-  //   }
-
-  //   document.getElementById('openAccountButton').disabled = true;
-  //   document.getElementById('openAccountButton').innerText = 'Creating Account...';
-  //   // Mock account creation
-  //   const accountNumber = generateAccountNumber();
-  //   setGeneratedAccountNumber(accountNumber);
-    
-  //   // setAccountCreated(true);
-    
-  //   const {data, error} = await supabase.auth.signUp({
-  //     email: formData.email,
-  //     password: formData.confirmPassword
-  //   });
-
-  //    if (error) {
-  //     console.error('Error creating account:', error.message);
-
-  //     if (error.message.includes('already registered')) {
-  //       toast({ title: "Error", description: "Email is already registered", variant: "destructive" });
-  //       document.getElementById('openAccountButton').disabled = false;
-  //       document.getElementById('openAccountButton').innerText = 'Open Account';
-  //     } else {
-  //       toast({ title: "Error", description: "Failed to create account", variant: "destructive" });
-  //       document.getElementById('openAccountButton').disabled = false;
-  //       document.getElementById('openAccountButton').innerText = 'Open Account';
-  //     }
-  //     return;
-  //   }
-
-  //   const user= data?.user;
-
-  //   if (!user) {
-  //     console.error('User not found');
-  //     return;
-  //   }
-
-  //   // const {error: accountError} = await supabase.from('accounts').insert([{
-  //   //   id: user.id,
-  //   //   full_name: formData.fullName,
-  //   //   email: formData.email,
-  //   //   phone: formData.phone,
-  //   //   date_of_birth: formData.dateOfBirth,
-  //   //   national_id: formData.nationalId,
-  //   //   account_number: accountNumber,
-  //   //   referral_code: formData.referralCode,
-  //   //   password: formData.confirmPassword,
-  //   //   checking_account_balance: formData.checking_account_balance || 0,
-  //   //   savings_account_balance: formData.savings_account_balance || 0,
-  //   //   balance: (parseFloat(formData.checking_account_balance) || 0) + (parseFloat(formData.savings_account_balance) || 0),
-  //   // }]);
-  //   const { error: accountError } = await supabase.from('accounts').insert([{
-  //     id: user.id, // make sure column type is uuid or text
-  //     full_name: formData.fullName,
-  //     email: formData.email,
-  //     phone: formData.phone,
-  //     date_of_birth: formData.dateOfBirth,
-  //     national_id: formData.nationalId,
-  //     account_number: accountNumber,
-  //     referral_code: formData.referralCode || null,
-  //     checking_account_balance: checkingBalance,
-  //     savings_account_balance: savingsBalance,
-  //     balance: checkingBalance + savingsBalance,
-  //   }]);
-
-
-  //   if (accountError) {
-  //     console.error('Error creating account:', accountError.message);
-  //     return;
-  //   } else if (formData.referralCode) {
-  //     // Store referral info if provided
-  //     localStorage.setItem('referralUsed', formData.referralCode);
-  //   }
-
-  //   // console.log("Form Data:", formData);
-
-  //   setAccountCreated(true);
-
-  // };
-
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -236,86 +123,6 @@ const OpenAccount = () => {
     }
   };  
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   // 1️⃣ Password validations
-  //   if (formData.password !== formData.confirmPassword) {
-  //     return toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
-  //   }
-  //   if (formData.password.length < 8) {
-  //     return toast({ title: "Error", description: "Password must be at least 8 characters", variant: "destructive" });
-  //   }
-
-  //   // 2️⃣ Required fields
-  //   if (!formData.fullName || !formData.email || !formData.phone || !formData.dateOfBirth) {
-  //     return toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
-  //   }
-
-  //   const button = document.getElementById('openAccountButton');
-  //   button.disabled = true;
-  //   button.innerText = 'Creating Account...';
-
-  //   try {
-  //     // 3️⃣ Create Supabase Auth user
-  //     const { data: authData, error: authError } = await supabase.auth.signUp({
-  //       email: formData.email,
-  //       password: formData.confirmPassword
-  //     });
-
-  //     if (authError) {
-  //       throw new Error(authError.message.includes('already registered')
-  //         ? 'Email is already registered'
-  //         : 'Failed to create account');
-  //     }
-
-  //     const user = authData?.user;
-  //     if (!user) throw new Error('User not returned from Supabase auth');
-
-  //     // 4️⃣ Generate account number and balances
-  //     const accountNumber = generateAccountNumber();
-  //     setGeneratedAccountNumber(accountNumber);
-
-  //     const checkingBalance = parseFloat(formData.checking_account_balance) || 0;
-  //     const savingsBalance = parseFloat(formData.savings_account_balance) || 0;
-
-  //     // 5️⃣ Insert into accounts table (RLS-safe)
-  //     const { error: accountError } = await supabase
-  //       .from('accounts')
-  //       .insert([{
-  //         id: user.id, // MUST match auth.uid()
-  //         full_name: formData.fullName,
-  //         email: formData.email,
-  //         phone: formData.phone,
-  //         date_of_birth: formData.dateOfBirth,
-  //         national_id: formData.nationalId || null,
-  //         account_number: accountNumber,
-  //         referral_code: formData.referralCode || null,
-  //         checking_account_balance: checkingBalance,
-  //         savings_account_balance: savingsBalance,
-  //         balance: checkingBalance + savingsBalance
-  //       }]);
-
-  //     if (accountError) throw new Error(accountError.message || 'Failed to create account record');
-
-  //     // 6️⃣ Save referral info locally if provided
-  //     if (formData.referralCode) localStorage.setItem('referralUsed', formData.referralCode);
-
-  //     setAccountCreated(true);
-  //     toast({ title: "Success", description: "Account created successfully!" });
-
-  //   } catch (err) {
-  //     console.error('Exception:', err);
-  //     toast({
-  //       title: "Error",
-  //       description: err.message || 'Database error saving new user',
-  //       variant: "destructive"
-  //     });
-  //   } finally {
-  //     button.disabled = false;
-  //     button.innerText = 'Open Account';
-  //   }
-  // };
 
   const proceedToDashboard = () => {
     const user = supabase.auth.getUser().then(({ data: { user } }) => {
@@ -446,7 +253,7 @@ const OpenAccount = () => {
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <Label htmlFor="nationalId">SSN</Label>
                   <Input
                     id="nationalId"
@@ -471,7 +278,7 @@ const OpenAccount = () => {
                   <p className="text-sm text-muted-foreground mt-1">
                     Have a referral code? Enter it and both you and your referrer get $5,000!
                   </p>
-                </div>
+                </div> */}
 
                 <div>
                   <Label htmlFor="password">Create Password</Label>
