@@ -253,6 +253,20 @@ const Withdraw = () => {
     }
 
     try {
+      const { data: { user: authenticatedUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authenticatedUser) {
+        throw new Error('Your sign-in session has expired. Please log in again.');
+      }
+
+      if (!userSession.id || authenticatedUser.id !== userSession.id) {
+        await supabase.auth.signOut();
+        localStorage.removeItem('userSession');
+        setUserSession(null);
+        alert('Your signed-in account does not match this profile. Please log in again before withdrawing.');
+        navigate('/login', { replace: true });
+        return;
+      }
+
       const res = await verifyOtp(userSession.email, otpValue);
 
       if (!res.success) {
@@ -260,7 +274,7 @@ const Withdraw = () => {
         return;
       }
 
-      alert('OTP verified! Processing your withdrawal.');
+      // alert('OTP verified! Processing your withdrawal.');
 
       const amount = parseFloat(formData.amount);
 
@@ -275,55 +289,25 @@ const Withdraw = () => {
         return;
       }
 
-      // 1️⃣ Insert withdrawal
-      const { error: withdrawalError } = await supabase
-        .from('transactions')
-        .insert([{
-          // id: userSession.id,
-          email: userSession.email,
-          account_name: formData.accountName,
-          account_number: formData.accountNumber?.trim(),
-          bank_name: formData.bankName,
-          routing_number: formData.routingNumber?.trim(),
-          swift_code: formData.swiftCode?.trim(),
-          amount,
-          note: formData.note || null,
-          from_account: selectedAccount,
-          status: 'completed',
-          created_at: new Date().toISOString(),
-          date: new Date().toLocaleDateString(),
-          type: 'Withdraw'
-        }]);
-
+      const { error: withdrawalError } = await supabase.rpc('process_withdrawal', {
+        p_from_account: selectedAccount,
+        p_amount: amount,
+        p_account_name: formData.accountName,
+        p_account_number: formData.accountNumber?.trim(),
+        p_routing_number: formData.routingNumber?.trim(),
+        p_swift_code: formData.swiftCode?.trim(),
+        p_bank_name: formData.bankName,
+        p_note: formData.note || null,
+      });
       if (withdrawalError) throw withdrawalError;
 
-      // 2️⃣ Compute updated balance
       const updatedBalance = {
         ...balance,
         [selectedAccount]: balance[selectedAccount] - amount
       };
 
-      // 3️⃣ Persist to Supabase
-      const email = userSession.email.trim().toLowerCase();
-      const { data: updatedData, error: balanceError } = await supabase
-        .from('accounts')
-        .update(
-          {
-            checking_account_balance: updatedBalance.checking,
-            savings_account_balance: updatedBalance.savings
-          },
-          { returning: 'representation' } // ensures updated row is returned
-        )
-        .eq('email', email);
-
-      if (balanceError) throw balanceError;
-
-      console.log('Balance updated in Supabase:', updatedData);
-
-      // 4️⃣ Update local state
       setBalance(updatedBalance);
 
-      // 5️⃣ Prepare receipt & reset form
       setReceiptData({
         accountName: formData.accountName,
         accountNumber: formData.accountNumber,
@@ -355,7 +339,7 @@ const Withdraw = () => {
 
     } catch (err) {
       console.error('Error in withdrawal:', err);
-      alert('Error verifying OTP or updating balance. Please try again.');
+      alert(err?.message || 'Withdrawal failed. Please try again.');
     }
   };
 

@@ -31,7 +31,6 @@ const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [generatedAccountNumber, setGeneratedAccountNumber] = useState('');
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -324,54 +323,39 @@ const AdminUsers = () => {
   // };
 
   const handleAddUser = async () => {
-    if (!formData.full_name || !formData.email) {
+    if (!formData.full_name.trim() || !formData.email.trim() || !formData.password) {
       toast({
         title: 'Validation Error',
-        description: 'Full name and email are required'
+        description: 'Full name, email, and password are required'
       });
       return;
     }
 
-    const nextAccountNumber = generateAccountNumber();
-    setGeneratedAccountNumber(nextAccountNumber);
+    if (formData.password.length < 8) {
+      toast({ title: 'Weak Password', description: 'Password should be at least 8 characters long.' });
+      return;
+    }
 
-    const password = formData.password || Math.random().toString(36).slice(-8);
+    const checking = Number(formData.checking_account_balance || 0);
+    const savings = Number(formData.savings_account_balance || 0);
+    if (!Number.isFinite(checking) || checking < 0 || !Number.isFinite(savings) || savings < 0) {
+      toast({ title: 'Invalid Balance', description: 'Balances must be valid non-negative amounts.' });
+      return;
+    }
 
     try {
-      // 1️⃣ Create auth user (admin)
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
+      const { error } = await supabase.functions.invoke('admin-create-user', {
+        body: {
+          full_name: formData.full_name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+          checking_account_balance: checking,
+          savings_account_balance: savings,
+          account_number: generateAccountNumber(),
+        },
       });
-
       if (error) throw error;
-      const userId = data?.user?.id;
-      if (!userId) throw new Error('No user id returned from auth');
 
-      // 2️⃣ Insert account row in DB
-      const checking = parseFloat(formData.checking_account_balance) || 0;
-      const savings = parseFloat(formData.savings_account_balance) || 0;
-      const insertPayload = {
-        id: userId,
-        full_name: formData.full_name,
-        email: formData.email,
-        account_number: nextAccountNumber,
-        checking_account_balance: checking,
-        savings_account_balance: savings,
-        balance: checking + savings,
-        status: 'active'
-      };
-
-      const { error: dbError } = await supabase.from('accounts').insert([insertPayload]);
-      if (dbError) {
-        // cleanup created auth user if DB insert failed
-        if (supabase.auth?.admin?.deleteUser) {
-          try { await supabase.auth.admin.deleteUser(userId); } catch (e) { /* ignore cleanup failure */ }
-        }
-        throw dbError;
-      }
-
-      // 3️⃣ Refetch all users to update table
       await fetchUsers();
 
       setIsAddDialogOpen(false);
@@ -389,7 +373,11 @@ const AdminUsers = () => {
       });
 
     } catch (err) {
-      const msg = err?.message || String(err);
+      let msg = err?.message || String(err);
+      if (err?.context instanceof Response) {
+        const responseBody = await err.context.json().catch(() => null);
+        msg = responseBody?.error || msg;
+      }
       toast({ title: 'Add User Failed', description: msg });
 
       if (msg.includes('already registered') || msg.toLowerCase().includes('already exists')) {

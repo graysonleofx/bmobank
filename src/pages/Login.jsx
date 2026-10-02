@@ -161,7 +161,7 @@ const Login = () => {
           <Card className="northline-auth-panel">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl text-primary">Welcome Back</CardTitle>
-              <CardDescription>Sign in to your Northline Bank account</CardDescription>
+              <CardDescription>Sign in to your BMO Bank account</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={ (e) => {

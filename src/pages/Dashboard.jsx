@@ -13,7 +13,6 @@ import SupportSection from '@/components/SupportSection';
 import { useToast } from '@/hooks/use-toast';
 import { Home, CreditCard, ArrowDownToLine, ArrowUpFromLine, Send, User, HelpCircle, LogOut, Bell, Eye, EyeOff, Gift, Settings, Copy, Check, Menu, X, Wallet, ArrowLeftRight, Receipt, PiggyBank, CircleDollarSign, TrendingUp, ChevronRight, ArrowUpRight, ArrowDownRight, ShieldCheck } from 'lucide-react';
 import supabase from  '../lib/supabaseClient';
-import { data } from 'autoprefixer';
 import ChequeDepositForm from '@/components/ChequeDepositForm';
 import bankLogo from '@/assets/bank.png';
 import './Dashboard.css';
@@ -71,7 +70,7 @@ const Dashboard = () => {
         const {data, error} = await supabase 
           .from('accounts')
           .select('checking_account_balance, savings_account_balance')
-          .eq('email', user?.email)
+          .eq('id', user?.id)
           // .single()
 
         // if (!data) {
@@ -167,12 +166,12 @@ const Dashboard = () => {
       const session = localStorage.getItem('userSession');
       if (!session) return;
 
-      const user = JSON.parse(session);
-
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) return;
       const { data, error } = await supabase
         .from('transactions') // your table name
         .select('*')
-        .eq('email', user.email)
+        .eq('user_id', user.id)
         .order('date', { ascending: false });
 
       if (error) {
@@ -191,7 +190,6 @@ const Dashboard = () => {
 
     fetchBalances();
     fetchTransactions();
-    setBalance(data[0]);
     fetchName();
     fetchAccountNumber();
   }, []);
@@ -634,56 +632,6 @@ const Dashboard = () => {
               {/* Virtual Card Display */}
               
 
-              {/* Recent Transactions */}
-              {/* <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base md:text-lg">Recent Transactions</CardTitle>
-                <CardDescription className="text-xs md:text-sm">Your latest account activity</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {transactions.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">No transactions yet</div>
-                ) : (
-                <div className="overflow-x-auto">
-                <Table>
-                <TableHeader>
-                  <TableRow>
-                  <TableHead className="text-xs md:text-sm">Description</TableHead>
-                  <TableHead className="text-xs md:text-sm">Amount</TableHead>
-                  <TableHead className="text-xs md:text-sm hidden md:table-cell">Date</TableHead>
-                  <TableHead className="text-xs md:text-sm">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.slice(0, 5).map(transaction => {
-                    // normalize type for reliable matching
-                    const type = (transaction.type || '').toLowerCase();
-                    const positiveTypes = ['credit', 'deposit', 'cheque_deposit'];
-                    const negativeTypes = ['debit', 'withdraw', 'withdrawal', 'transfer'];
-                    const sign = positiveTypes.includes(type) ? '+' : (negativeTypes.includes(type) ? '-' : (transaction.amount > 0 ? '+' : '-'));
-                    const colorClass = sign === '+' ? 'text-banking-blue' : 'text-banking-orange';
-                    return (
-                      <TableRow key={transaction.id}>
-                        <TableCell className="text-xs md:text-sm">{transaction.note}</TableCell>
-                        <TableCell className={`text-xs md:text-sm ${colorClass}`}>
-                        {sign}${Math.abs(transaction.amount).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-xs md:text-sm hidden md:table-cell">{transaction.date}</TableCell>
-                        <TableCell>
-                          <Badge variant={transaction.status === 'completed' || transaction.status === 'approved' ? 'default' : transaction.status === 'rejected' ? 'destructive' : 'secondary'} className={transaction.status === 'completed' || transaction.status === 'approved' ? 'text-white' : transaction.status === 'rejected' ? '' : 'text-yellow-600'}>
-                            {transaction.status === 'completed' ? 'Completed' : transaction.status === 'approved' ? 'Approved' : transaction.status === 'rejected' ? 'Rejected' : 'Pending'}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-                </Table>
-                </div>
-                )}
-              </CardContent>
-              </Card> */}
-
               {/* Referral Widget */}
               
               <section id="account-summary" aria-labelledby="account-summary-title">
@@ -763,10 +711,60 @@ const Dashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <article id="credit-card-offer" className="dashboard-credit-offer">
+                  {/* Recent Transactions */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base md:text-lg">Recent Transactions</CardTitle>
+                      <CardDescription className="text-xs md:text-sm">Your latest account activity</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {transactions.length === 0 ? (
+                      <div className="py-6 text-center text-sm text-muted-foreground">No transactions yet</div>
+                      ) : (
+                      <div className="overflow-x-auto">
+                      <Table>
+                      <TableHeader>
+                        <TableRow>
+                        <TableHead className="text-xs md:text-sm">Description</TableHead>
+                        <TableHead className="text-xs md:text-sm">Amount</TableHead>
+                        <TableHead className="text-xs md:text-sm hidden md:table-cell">Date</TableHead>
+                        <TableHead className="text-xs md:text-sm">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {transactions.slice(0, 5).map(transaction => {
+                          // normalize type for reliable matching
+                          const type = (transaction.type || '').toLowerCase();
+                          const positiveTypes = ['credit', 'deposit', 'cheque_deposit'];
+                          const negativeTypes = ['debit', 'withdraw', 'withdrawal', 'transfer'];
+                          const sign = positiveTypes.includes(type) ? '+' : (negativeTypes.includes(type) ? '-' : (transaction.amount > 0 ? '+' : '-'));
+                          const colorClass = sign === '+' ? 'text-banking-blue' : 'text-banking-orange';
+                          return (
+                            <TableRow key={transaction.id}>
+                              <TableCell className="text-xs md:text-sm">{transaction.note}</TableCell>
+                              <TableCell className={`text-xs md:text-sm ${colorClass}`}>
+                              {sign}${Math.abs(transaction.amount).toLocaleString()}
+                              </TableCell>
+                              <TableCell className="text-xs md:text-sm hidden md:table-cell">{transaction.date}</TableCell>
+                              <TableCell>
+                                <Badge variant={transaction.status === 'completed' || transaction.status === 'approved' ? 'default' : transaction.status === 'rejected' ? 'destructive' : 'secondary'} className={transaction.status === 'completed' || transaction.status === 'approved' ? 'text-white' : transaction.status === 'rejected' ? '' : 'text-yellow-600'}>
+                                  {transaction.status === 'completed' ? 'Completed' : transaction.status === 'approved' ? 'Approved' : transaction.status === 'rejected' ? 'Rejected' : 'Pending'}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                      </Table>
+                      </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* <article id="credit-card-offer" className="dashboard-credit-offer">
                     <div><span className="dashboard-credit-offer-icon"><CreditCard size={23} /></span><h3>Get a Credit Card</h3><p>Apply for a credit card and get flexible access to credit. There is no credit card linked to this profile yet.</p></div>
                     <div className="dashboard-credit-actions"><Button type="button" onClick={() => { setCardApplicationStep(0); setShowCardApplication(true); }}>Apply Now</Button><Button type="button" variant="outline" onClick={() => toast({ title: 'Credit card information', description: 'Credit card details are coming soon.' })}>Learn More</Button></div>
-                  </article>
+                  </article> */}
                 </div>
               </section>
             </div>}

@@ -236,6 +236,20 @@ const Transfer = () => {
     }
 
     try {
+      const { data: { user: authenticatedUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authenticatedUser) {
+        throw new Error('Your sign-in session has expired. Please log in again.');
+      }
+
+      if (!userSession.id || authenticatedUser.id !== userSession.id) {
+        await supabase.auth.signOut();
+        localStorage.removeItem('userSession');
+        setUserSession(null);
+        alert('Your signed-in account does not match this profile. Please log in again before transferring.');
+        navigate('/login', { replace: true });
+        return;
+      }
+
       const verifyRes = await verifyOtp(userSession.email, otpValue);
 
       if (!verifyRes.success) {
@@ -256,43 +270,22 @@ const Transfer = () => {
         return;
       }
 
-      // insert complete transaction and update balance
-      const { error: transactionError } = await supabase
-      .from('transactions')
-      .insert([{
-        email: userSession.email,
-        account_name: formData.accountName,
-        account_number: formData.accountNumber?.trim(),
-        routing_number: formData.routingNumber?.trim(),
-        swift_code: formData.swiftCode?.trim(),
-        bank_name: formData.bankName,
-        amount: amount,
-        note: formData.note,
-        from_account: selectedAccount,
-        type: 'Transfer',
-        status: 'completed',
-        created_at: new Date().toISOString(),
-        date: new Date().toLocaleDateString(),
-      }]);
-      if (transactionError) throw transactionError;
-      
-      // Update account balance
-      const newBalance = { 
-        ...balance, 
-        [selectedAccount]: balance[selectedAccount] - amount
+      const { error: transferError } = await supabase.rpc('process_transfer', {
+        p_from_account: selectedAccount,
+        p_amount: amount,
+        p_account_name: formData.accountName,
+        p_account_number: formData.accountNumber?.trim(),
+        p_routing_number: formData.routingNumber?.trim(),
+        p_swift_code: formData.swiftCode?.trim(),
+        p_bank_name: formData.bankName,
+        p_note: formData.note,
+      });
+      if (transferError) throw transferError;
+
+      const newBalance = {
+        ...balance,
+        [selectedAccount]: balance[selectedAccount] - amount,
       };
-
-      const email = userSession.email.trim().toLowerCase();
-
-      const {data: updateData, error: updateError } = await supabase
-        .from('accounts')
-        .update({
-          checking_account_balance: newBalance.checking,
-          savings_account_balance: newBalance.savings
-        }, { returning: 'representation' })
-        .eq('email', email);
-
-      if (updateError) throw updateError;
 
       setBalance(newBalance);
 
@@ -327,7 +320,7 @@ const Transfer = () => {
       }, 3000);
     } catch (error) {
       console.error('Error processing transfer:', error);
-      alert('Failed to process transfer. Please try again.');
+      alert(error?.message || 'Failed to process transfer. Please try again.');
     }
   }
 
