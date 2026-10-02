@@ -111,6 +111,7 @@ import { set } from 'date-fns';
         // }));
         const mapped = (data || []).map((r) => ({
           id: String(r.id),
+          userId: String(r.user_id || ''),
           email: r.email || "",
           userName: r.account_name || "",
           userAccount: r.user_account || "",
@@ -192,42 +193,39 @@ import { set } from 'date-fns';
     //   }
     // };
 
-    const handleUserSelect = (email) => {
-      const user = users.find(u => u.email === email);
+    const handleUserSelect = (accountId) => {
+      const user = users.find(account => String(account.id) === accountId);
       if (user) {
         setFormData(prev => ({
           ...prev,
+          userId: user.id,
           email: user.email,
           userName: user.full_name,
-          userAccount: user.account
+          userAccount: user.account_number
         }));
       }
     };
 
     const handleAddTransaction = async () => {
-      if (!formData.email || !formData.type || !formData.amount) {
+      const amount = Number(formData.amount);
+      if (!formData.userId || !formData.type || !Number.isFinite(amount) || amount <= 0) {
         toast({
           title: 'Error',
-          description: 'Please fill in all required fields',
+          description: 'Select a user and transaction type, and enter an amount greater than zero.',
           variant: 'destructive'
         });
         return;
       }
-      const payload = {
-        email: formData.email,
-        account_name: formData.userName,
-        user_account: formData.userAccount,
-        type: formData.type,
-        amount: Number(formData.amount),
-        note: formData.note || 'Admin transaction',
-        status: 'completed',
-        created_at: new Date().toISOString(),
-        date: formData.date || new Date().toISOString() // include date if provided,
-      };
 
       try {
         setLoading(true);
-        const { data, error } = await supabase.from('transactions').insert(payload).select().limit(1).single();
+        const { data, error } = await supabase.rpc('admin_create_transaction', {
+          p_account_id: formData.userId,
+          p_type: formData.type,
+          p_amount: amount,
+          p_note: formData.note || null,
+          p_date: formData.date || new Date().toISOString().slice(0, 10)
+        });
 
         if (error) {
           toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -238,7 +236,7 @@ import { set } from 'date-fns';
         const newTransaction = {
           id: String(data.id ?? data.txn_id ?? Date.now()),
           email: data.email ?? formData.email,
-          userId: String(data.user_id ?? data.userId ?? formData.userId),
+          userId: String(data.user_id ?? formData.userId),
           userName: data.account_name ?? data.accountName ?? formData.userName,
           userAccount: data.user_account ?? data.userAccount ?? formData.userAccount,
           type: (data.type ?? formData.type),
@@ -260,17 +258,19 @@ import { set } from 'date-fns';
         // });
 
         setFormData({
+          userId: '',
           email: "",
           userName: "",
           userAccount: "",
           type: "",
           amount: "",
-          note: ""
+          note: "",
+          date: ''
         });
 
         toast({
-          title: 'Transaction Added',
-          description: `${newTransaction.type} of ${formatCurrency(newTransaction.amount)} has been processed`
+          title: 'Transaction Recorded',
+          description: `${newTransaction.type} of ${formatCurrency(newTransaction.amount)} was added to transaction history.`
         });
       } catch (err) {
         toast({ title: 'Error', description: err.message || 'Failed to add', variant: 'destructive' });
@@ -337,6 +337,7 @@ import { set } from 'date-fns';
         const txn = transactions.find(t => t.id === transactionId);
         if (txn) {
           return {
+            userId: String(txn.userId || users.find(user => user.email === txn.email)?.id || ''),
             email: txn.email,
             userName: txn.userName,
             from_account: txn.from_account,
@@ -390,46 +391,46 @@ import { set } from 'date-fns';
     const handleSaveEditTransaction = async (transactionId) => {
       if (!transactionId) return;
 
-      const updatedDate = formData.date
-        ? new Date(formData.date) // convert date string to Date object
-        : new Date(); // fallback to now
-
-      const updatePayload = {
-        email: formData.email,
-        account_name: formData.userName,
-        from_account: formData.from_account,
-        type: formData.type,
-        amount: Number(formData.amount),
-        note: formData.note || 'Admin transaction',
-        status: formData.status,
-        created_at: updatedDate.toISOString(), // save full ISO timestamp
-      };
+      const amount = Number(formData.amount);
+      if (!formData.userId || !Number.isFinite(amount) || amount <= 0) {
+        toast({ title: 'Invalid transaction', description: 'Select a user and enter an amount greater than zero.', variant: 'destructive' });
+        return;
+      }
 
       try {
         setLoading(true);
 
-        const { error } = await supabase
-          .from('transactions')
-          .update(updatePayload)
-          .eq('id', transactionId);
+        const { data, error } = await supabase.rpc('admin_update_transaction', {
+          p_transaction_id: transactionId,
+          p_account_id: formData.userId,
+          p_type: formData.type,
+          p_amount: amount,
+          p_note: formData.note || null,
+          p_status: formData.status,
+          p_from_account: formData.from_account || null,
+          p_date: formData.date || new Date().toISOString().slice(0, 10)
+        });
 
         if (error) {
           toast({ title: 'Error', description: error.message, variant: 'destructive' });
           return;
         }
 
-        // Update local dashboard state
-        setTransactions(prev =>
-          prev.map(t =>
-            t.id === transactionId
-              ? {
-                  ...t,
-                  ...updatePayload,
-                  timestamp: updatePayload.created_at, // ensure dashboard uses updated date
-                }
-              : t
-          )
-        );
+        const updatedTransaction = {
+          id: String(data.id),
+          userId: String(data.user_id),
+          email: data.email,
+          userName: data.account_name,
+          userAccount: data.user_account,
+          type: data.type,
+          amount: Number(data.amount),
+          note: data.note || '',
+          status: data.status,
+          timestamp: data.created_at
+        };
+        setTransactions(prev => prev.map(transaction =>
+          transaction.id === String(transactionId) ? updatedTransaction : transaction
+        ));
 
         setIsEditDialogOpen(false);
         toast({
@@ -490,7 +491,7 @@ import { set } from 'date-fns';
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="user-select">Select User</Label>
-                    <Select onValueChange={handleUserSelect} value={formData.email}>
+                    <Select onValueChange={handleUserSelect} value={String(formData.userId || '')}>
                       <SelectTrigger>
                         <SelectValue placeholder="Choose a user" />
                       </SelectTrigger>
@@ -500,7 +501,7 @@ import { set } from 'date-fns';
                         )}
 
                         {users.map((user) => (
-                          <SelectItem key={user.email} value={user.email}>
+                          <SelectItem key={user.id} value={String(user.id)}>
                             {user.full_name} — {user.email} ({user.account_number})
                           </SelectItem>
                         ))}
@@ -709,7 +710,7 @@ import { set } from 'date-fns';
                 </div>
                 <div>
                   <Label htmlFor="user-select-edit">Select User</Label>
-                  <Select onValueChange={handleUserSelect} value={formData.email}>
+                  <Select onValueChange={handleUserSelect} value={String(formData.userId || '')}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose a user" />
                     </SelectTrigger>
@@ -719,7 +720,7 @@ import { set } from 'date-fns';
                       )}
 
                       {users.map((user) => (
-                        <SelectItem key={user.email} value={user.email}>
+                        <SelectItem key={user.id} value={String(user.id)}>
                           {user.full_name} — {user.email} ({user.account_number})
                         </SelectItem>
                       ))}

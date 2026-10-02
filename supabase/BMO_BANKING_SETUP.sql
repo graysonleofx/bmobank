@@ -511,6 +511,136 @@ $$;
 revoke all on function public.admin_adjust_balance(uuid, text, numeric, text) from public, anon;
 grant execute on function public.admin_adjust_balance(uuid, text, numeric, text) to authenticated;
 
+create or replace function public.admin_create_transaction(
+  p_account_id uuid,
+  p_type text,
+  p_amount numeric,
+  p_note text,
+  p_date date
+)
+returns public.transactions
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_account public.accounts;
+  v_transaction public.transactions;
+begin
+  if not public.is_admin() then
+    raise exception 'Only administrators can create transactions';
+  end if;
+  if p_type is null or p_type not in ('deposit', 'withdrawal', 'transfer') then
+    raise exception 'Invalid transaction type';
+  end if;
+  if p_amount is null or p_amount <= 0 or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Transaction amount must be greater than zero';
+  end if;
+  if p_date is null then
+    raise exception 'Transaction date is required';
+  end if;
+
+  select * into v_account
+  from public.accounts
+  where id = p_account_id
+  for update;
+  if not found then
+    raise exception 'Account not found';
+  end if;
+
+  insert into public.transactions (
+    user_id, email, account_name, user_account, account_number,
+    type, amount, note, status, reference, date
+  ) values (
+    v_account.id, v_account.email, v_account.full_name, v_account.account_number,
+    v_account.account_number, p_type, p_amount,
+    coalesce(nullif(trim(p_note), ''), 'Admin transaction'),
+    'completed', 'ADMIN-' || gen_random_uuid()::text, p_date
+  ) returning * into v_transaction;
+
+  return v_transaction;
+end;
+$$;
+revoke all on function public.admin_create_transaction(uuid, text, numeric, text, date) from public, anon;
+grant execute on function public.admin_create_transaction(uuid, text, numeric, text, date) to authenticated;
+
+create or replace function public.admin_update_transaction(
+  p_transaction_id uuid,
+  p_account_id uuid,
+  p_type text,
+  p_amount numeric,
+  p_note text,
+  p_status text,
+  p_from_account text,
+  p_date date
+)
+returns public.transactions
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_account public.accounts;
+  v_transaction public.transactions;
+  v_updated_transaction public.transactions;
+begin
+  if not public.is_admin() then
+    raise exception 'Only administrators can update transactions';
+  end if;
+  if p_type is null or p_type not in ('deposit', 'withdrawal', 'transfer') then
+    raise exception 'Invalid transaction type';
+  end if;
+  if p_amount is null or p_amount <= 0 or p_amount::text in ('NaN', 'Infinity', '-Infinity') then
+    raise exception 'Transaction amount must be greater than zero';
+  end if;
+  if p_status is null or p_status not in ('pending', 'completed', 'failed', 'approved', 'rejected') then
+    raise exception 'Invalid transaction status';
+  end if;
+  if p_from_account is not null and p_from_account not in ('checking', 'savings') then
+    raise exception 'Invalid source account';
+  end if;
+  if p_date is null then
+    raise exception 'Transaction date is required';
+  end if;
+
+  select * into v_transaction
+  from public.transactions
+  where id = p_transaction_id
+  for update;
+  if not found then
+    raise exception 'Transaction not found';
+  end if;
+
+  select * into v_account
+  from public.accounts
+  where id = p_account_id
+  for update;
+  if not found then
+    raise exception 'Account not found';
+  end if;
+
+  update public.transactions
+  set user_id = v_account.id,
+      email = v_account.email,
+      account_name = v_account.full_name,
+      user_account = v_account.account_number,
+      account_number = v_account.account_number,
+      type = p_type,
+      amount = p_amount,
+      note = coalesce(nullif(trim(p_note), ''), 'Admin transaction'),
+      status = p_status,
+      from_account = p_from_account,
+      date = p_date,
+      created_at = p_date::timestamp at time zone 'UTC'
+  where id = p_transaction_id
+  returning * into v_updated_transaction;
+
+  return v_updated_transaction;
+end;
+$$;
+revoke all on function public.admin_update_transaction(uuid, uuid, text, numeric, text, text, text, date) from public, anon;
+grant execute on function public.admin_update_transaction(uuid, uuid, text, numeric, text, text, text, date) to authenticated;
+
 -- Supports the existing admin user editor's absolute checking/savings values.
 -- Both balances and their audit rows are committed or rolled back together.
 create or replace function public.admin_set_account_balances(
@@ -586,6 +716,121 @@ end;
 $$;
 revoke all on function public.admin_set_account_balances(uuid, numeric, numeric, text) from public, anon;
 grant execute on function public.admin_set_account_balances(uuid, numeric, numeric, text) to authenticated;
+
+create or replace function public.admin_update_account(
+  p_account_id uuid,
+  p_full_name text,
+  p_checking_balance numeric,
+  p_savings_balance numeric
+)
+returns public.accounts
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_account public.accounts;
+  v_updated_account public.accounts;
+  v_checking_delta numeric;
+  v_savings_delta numeric;
+begin
+  if not public.is_admin() then
+    raise exception 'Only administrators can update accounts';
+  end if;
+  if nullif(trim(p_full_name), '') is null then
+    raise exception 'Account name is required';
+  end if;
+  if p_checking_balance is null or p_checking_balance < 0
+     or p_savings_balance is null or p_savings_balance < 0 then
+    raise exception 'Account balances must be zero or greater';
+  end if;
+
+  select * into v_account
+  from public.accounts
+  where id = p_account_id
+  for update;
+  if not found then
+    raise exception 'Account not found';
+  end if;
+
+  v_checking_delta := p_checking_balance - v_account.checking_account_balance;
+  v_savings_delta := p_savings_balance - v_account.savings_account_balance;
+
+  update public.accounts
+  set full_name = trim(p_full_name),
+      checking_account_balance = p_checking_balance,
+      savings_account_balance = p_savings_balance
+  where id = p_account_id
+  returning * into v_updated_account;
+
+  if v_checking_delta <> 0 then
+    insert into public.transactions (
+      user_id, email, account_name, user_account, from_account,
+      type, amount, note, status, reference, date
+    ) values (
+      v_updated_account.id, v_updated_account.email, v_updated_account.full_name,
+      v_updated_account.account_number, 'checking', 'admin_adjustment',
+      abs(v_checking_delta), case when v_checking_delta > 0 then 'Checking deposit' else 'Checking withdrawal' end,
+      'completed', 'ADJUST-CHECKING-' || gen_random_uuid()::text, current_date
+    );
+  end if;
+
+  if v_savings_delta <> 0 then
+    insert into public.transactions (
+      user_id, email, account_name, user_account, from_account,
+      type, amount, note, status, reference, date
+    ) values (
+      v_updated_account.id, v_updated_account.email, v_updated_account.full_name,
+      v_updated_account.account_number, 'savings', 'admin_adjustment',
+      abs(v_savings_delta), case when v_savings_delta > 0 then 'Savings deposit' else 'Savings withdrawal' end,
+      'completed', 'ADJUST-SAVINGS-' || gen_random_uuid()::text, current_date
+    );
+  end if;
+
+  return v_updated_account;
+end;
+$$;
+revoke all on function public.admin_update_account(uuid, text, numeric, numeric) from public, anon;
+grant execute on function public.admin_update_account(uuid, text, numeric, numeric) to authenticated;
+
+create or replace function public.admin_delete_account(p_account_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+as $$
+declare
+  v_account public.accounts;
+begin
+  if not public.is_admin() then
+    raise exception 'Only administrators can delete accounts';
+  end if;
+
+  select * into v_account
+  from public.accounts
+  where id = p_account_id
+  for update;
+  if not found then
+    raise exception 'Account not found';
+  end if;
+
+  if v_account.checking_account_balance <> 0
+     or v_account.savings_account_balance <> 0
+     or exists (select 1 from public.deposits where user_id = p_account_id or account_id = p_account_id)
+     or exists (select 1 from public.transactions where user_id = p_account_id) then
+    raise exception 'Cannot permanently delete an account with a balance, deposits, or transaction history. Preserve the account to retain its financial records.';
+  end if;
+
+  begin
+    delete from public.accounts where id = p_account_id;
+    delete from auth.users where id = p_account_id;
+  exception when foreign_key_violation then
+    raise exception 'Cannot permanently delete this account because related records exist. Preserve the account to retain its financial records.';
+  end;
+end;
+$$;
+revoke all on function public.admin_delete_account(uuid) from public, anon;
+grant execute on function public.admin_delete_account(uuid) to authenticated;
 
 -- ============================================
 -- Grants and RLS

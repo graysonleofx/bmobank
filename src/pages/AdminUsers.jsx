@@ -142,16 +142,18 @@ const AdminUsers = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    // optionally confirm here
-    const { error } = await supabase
-      .from('accounts')
-      .delete()
-      .eq('id', userId);
+    const user = users.find(account => account.id === userId);
+    if (!user || !window.confirm(`Permanently delete ${user.full_name}? This is allowed only when the account has no balance or financial history.`)) return;
+
+    const { error } = await supabase.rpc('admin_delete_account', {
+      p_account_id: userId
+    });
 
     if (error) {
       toast({
         title: 'Delete Failed',
-        description: error.message
+        description: error.message,
+        variant: 'destructive'
       });
       return;
     }
@@ -159,7 +161,7 @@ const AdminUsers = () => {
     setUsers(prev => prev.filter(user => user.id !== userId));
     toast({
       title: 'User Deleted',
-      description: 'User has been permanently removed'
+      description: 'The account and sign-in were permanently removed.'
     });
   };
 
@@ -175,52 +177,52 @@ const AdminUsers = () => {
   };
 
   const handleSaveEdit = async () => {
-  if (!selectedUser) return;
+    if (!selectedUser) return;
 
-  const updates = {
-    full_name: formData.full_name || selectedUser.full_name || "",
-    email: formData.email || selectedUser.email || "",
-    checking_account_balance: parseFloat(formData.checking_account_balance) || selectedUser.checking_account_balance || 0,
-    savings_account_balance: parseFloat(formData.savings_account_balance) || selectedUser.savings_account_balance || 0
-  };
+    const fullName = formData.full_name.trim();
+    const checkingBalance = Number(formData.checking_account_balance);
+    const savingsBalance = Number(formData.savings_account_balance);
 
-  const { data, error } = await supabase
-    .from('accounts')
-    .update(updates)
-    .eq('id', selectedUser.id)
-    .select('*')
-    .maybeSingle();
+    if (!fullName || !Number.isFinite(checkingBalance) || checkingBalance < 0 || !Number.isFinite(savingsBalance) || savingsBalance < 0) {
+      toast({
+        title: 'Invalid user information',
+        description: 'Enter a name and non-negative checking and savings balances.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-  if (error) {
-    toast({
-      title: 'Update Failed',
-      description: error.message
+    const { error } = await supabase.rpc('admin_update_account', {
+      p_account_id: selectedUser.id,
+      p_full_name: fullName,
+      p_checking_balance: checkingBalance,
+      p_savings_balance: savingsBalance
     });
-    return;
-  }
 
-  // FIXED → use full_name (your real DB column)
-  setUsers(prev =>
-    prev.map((u) =>
-      u.id === selectedUser.id
-        ? {
-            ...u,
-            full_name: data.full_name ?? "",
-            email: data.email ?? "",
-            checking_account_balance: Number(data.checking_account_balance) || 0,
-            savings_account_balance: Number(data.savings_account_balance) || 0
-          }
-        : u
-    )
-  );
+    if (error) {
+      toast({
+        title: 'Update Failed',
+        description: error.message,
+        variant: 'destructive'
+      });
+      return;
+    }
 
-  setIsEditDialogOpen(false);
-  setSelectedUser(null);
+    setUsers(prev => prev.map(user => user.id === selectedUser.id
+      ? {
+          ...user,
+          full_name: fullName,
+          checking_account_balance: checkingBalance,
+          savings_account_balance: savingsBalance
+        }
+      : user));
+    setIsEditDialogOpen(false);
+    setSelectedUser(null);
 
-  toast({
-    title: 'User Updated',
-    description: 'User information has been successfully updated'
-  });
+    toast({
+      title: 'User Updated',
+      description: `${fullName} has been updated successfully`
+    });
   };
 
   const generateAccountNumber = () => {
@@ -592,7 +594,7 @@ const AdminUsers = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
-              <DialogDescription>Update user information</DialogDescription>
+              <DialogDescription>Update the user's name and account balances.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -609,7 +611,7 @@ const AdminUsers = () => {
                   id="edit-email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  readOnly
                 />
               </div>
               <div>
@@ -617,6 +619,8 @@ const AdminUsers = () => {
                 <Input
                   id="edit-checking"
                   type="number"
+                  min="0"
+                  step="0.01"
                   value={formData.checking_account_balance}
                   onChange={(e) => setFormData(prev => ({ ...prev, checking_account_balance: e.target.value }))}
                 />
@@ -626,6 +630,8 @@ const AdminUsers = () => {
                 <Input
                   id="edit-savings"
                   type="number"
+                  min="0"
+                  step="0.01"
                   value={formData.savings_account_balance}
                   onChange={(e) => setFormData(prev => ({ ...prev, savings_account_balance: e.target.value }))}
                 />
