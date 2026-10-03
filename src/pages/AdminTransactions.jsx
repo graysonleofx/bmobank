@@ -312,7 +312,9 @@ import { set } from 'date-fns';
 
       try {
         setLoading(true);
-        const { error } = await supabase.from('transactions').delete().eq('id', transactionId);
+        const { error } = await supabase.rpc('admin_delete_transaction', {
+          p_transaction_id: transactionId
+        });
 
         if (error) {
           toast({ title: 'Error', description: error.message, variant: 'destructive' });
