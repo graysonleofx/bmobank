@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import { ArrowLeft, ArrowUpFromLine } from 'lucide-react';
 import supabase from '../lib/supabaseClient';
 import { sendOtp } from '../lib/sendOtp';
 import { verifyOtp } from '../lib/verifyOtp';
+import { sendTransactionSuccessEmail } from '@/services/emailService';
 
 const Withdraw = () => {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ const Withdraw = () => {
     fromAccount: ''
   });
   const [balance, setBalance] = useState({ checking: null, savings: null });
+  const transactionSubmissionInProgress = useRef(false);
 
   useEffect(() => {
     const session = localStorage.getItem('userSession');
@@ -53,7 +55,7 @@ const Withdraw = () => {
         const user = JSON.parse(session);
         const { data, error } = await supabase
         .from('accounts')
-        .select('checking_account_balance, savings_account_balance, status, id')
+        .select('checking_account_balance, savings_account_balance, status, id, full_name, email')
         .eq('email', user?.email);
         // .single()
 
@@ -64,7 +66,12 @@ const Withdraw = () => {
             checking: data[0].checking_account_balance,
             savings: data[0].savings_account_balance
           });
-          setUserAccount({id: data[0].id, status: data[0].status});
+          setUserAccount({
+            id: data[0].id,
+            status: data[0].status,
+            fullName: data[0].full_name,
+            email: data[0].email,
+          });
         } else {
           setBalance({ checking: 0, savings: 0 });
           setUserAccount(null);
@@ -289,7 +296,10 @@ const Withdraw = () => {
         return;
       }
 
-      const { error: withdrawalError } = await supabase.rpc('process_withdrawal', {
+      if (transactionSubmissionInProgress.current) return;
+      transactionSubmissionInProgress.current = true;
+
+      const { data: transaction, error: withdrawalError } = await supabase.rpc('process_withdrawal', {
         p_from_account: selectedAccount,
         p_amount: amount,
         p_account_name: formData.accountName,
@@ -332,12 +342,33 @@ const Withdraw = () => {
       setSelectedAccount('');
 
       proceedToProgress();
+      if (transaction?.status === 'completed') {
+        sendTransactionSuccessEmail({
+          user_name: userAccount?.fullName,
+          user_email: transaction.email || userAccount?.email || userSession.email,
+          transaction_type: 'Withdrawal',
+          transaction_status: 'Successful',
+          amount: transaction.amount,
+          currency: 'USD',
+          withdrawal_method: transaction.bank_name
+            ? `Bank Withdrawal - ${transaction.bank_name}`
+            : 'Bank Withdrawal',
+          masked_destination: transaction.account_number,
+          transaction_id: transaction.id || transaction.reference,
+          transaction_date: transaction.created_at,
+          description: transaction.note,
+          balance: '',
+        }).catch((emailError) => {
+          console.error('Withdrawal succeeded, but its confirmation email could not be sent:', emailError);
+        });
+      }
       setTimeout(() => {
         setShowProgress(false);
         setShowReceipt(true);
       }, 3000);
 
     } catch (err) {
+      transactionSubmissionInProgress.current = false;
       console.error('Error in withdrawal:', err);
       alert(err?.message || 'Withdrawal failed. Please try again.');
     }

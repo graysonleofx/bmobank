@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>{{transaction_type}} Successful - BMO Banking</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px 12px;
+        background: #f2f5f7;
+        color: #24313b;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      .email-shell {
+        width: 100%;
+        max-width: 620px;
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1px solid #dbe2e7;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+      .header {
+        padding: 26px 32px;
+        background: #123b5d;
+        color: #ffffff;
+      }
+      .brand {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .tagline {
+        margin: 5px 0 0;
+        color: #d5e5ef;
+        font-size: 13px;
+      }
+      .content {
+        padding: 32px;
+      }
+      .status {
+        margin: 0 0 22px;
+        color: #167447;
+        font-size: 22px;
+        line-height: 1.35;
+      }
+      .greeting,
+      .intro {
+        font-size: 15px;
+        line-height: 1.6;
+      }
+      .amount {
+        margin: 24px 0;
+        padding: 18px;
+        border: 1px solid #dbe7e0;
+        border-radius: 6px;
+        background: #f5faf7;
+        color: #17633f;
+        font-size: 27px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .section-title {
+        margin: 28px 0 10px;
+        font-size: 16px;
+      }
+      .details {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .details th,
+      .details td {
+        padding: 12px 8px;
+        border-bottom: 1px solid #e7ecef;
+        font-size: 14px;
+        line-height: 1.45;
+        text-align: left;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+      }
+      .details th {
+        width: 38%;
+        color: #5b6973;
+        font-weight: 600;
+      }
+      .security {
+        margin-top: 28px;
+        padding: 16px;
+        border-left: 4px solid #d59b32;
+        background: #fff9eb;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .support-link {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 11px 16px;
+        border-radius: 4px;
+        background: #123b5d;
+        color: #ffffff !important;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .footer {
+        padding: 20px 32px 26px;
+        border-top: 1px solid #e7ecef;
+        color: #64727c;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .footer p {
+        margin: 4px 0;
+      }
+      @media only screen and (max-width: 480px) {
+        body {
+          padding: 12px 8px;
+        }
+        .header,
+        .content,
+        .footer {
+          padding-right: 20px;
+          padding-left: 20px;
+        }
+        .status {
+          font-size: 20px;
+        }
+        .amount {
+          font-size: 24px;
+        }
+        .details th,
+        .details td {
+          padding: 10px 5px;
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-shell">
+      <div class="header">
+        <img src="	https://www.bmo.com/dist/images/logos/bmo-blue-on-transparent-en.svg" alt="BMO Bank" style="max-width:120px;">
+        <!-- <p class="brand">BMO BANKING</p> -->
+        <p class="tagline">Secure Digital Banking</p>
+      </div>
+      <main class="content">
+        <h1 class="status">&#10003; {{transaction_type}} Successful</h1>
+        <p class="greeting">Hello {{user_name}},</p>
+        <p class="intro">Your {{transaction_type}} has been successfully completed.</p>
+        <div class="amount">{{currency}} {{amount}}</div>
+
+        <h2 class="section-title">Transaction Details</h2>
+        <table class="details" role="presentation">
+          <tr><th scope="row">Transaction Type</th><td>{{transaction_type}}</td></tr>
+          <tr><th scope="row">Status</th><td>{{transaction_status}}</td></tr>
+          <tr><th scope="row">Reference</th><td>{{transaction_id}}</td></tr>
+          <tr><th scope="row">Date</th><td>{{transaction_date}}</td></tr>
+          <tr><th scope="row">Recipient / withdrawal method</th><td>{{recipient_name}}{{withdrawal_method}}</td></tr>
+          <tr><th scope="row">Account / destination</th><td>{{masked_account}}{{masked_destination}}</td></tr>
+          <tr><th scope="row">Description</th><td>{{description}}</td></tr>
+        </table>
+
+        <div class="security">
+          <strong>Security Notice</strong><br>
+          If you did not authorize this transaction, please contact BMO Banking support immediately.
+        </div>
+        <a class="support-link" href="mailto:contactus.bmobank@gmail.com">Contact Support</a>
+      </main>
+      <footer class="footer">
+        <p><strong>BMO Banking</strong></p>
+        <p>Secure &bull; Reliable &bull; Simple</p>
+        <p>This is an automated transaction notification. Please do not reply to this email.</p>
+      </footer>
+    </div>
+  </body>
+</html>

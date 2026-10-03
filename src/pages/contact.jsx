@@ -79,7 +79,7 @@ const ContactUs = () => {
 
   const contactDetails = {
     phone: '+1 (000) 000-0000',
-    email: 'contact-us@brnobank.com',
+    email: 'contactus.bmobank@gmail.com',
     address: '123 Finance Drive, Suite 400, Melbourne VIC 3000, Australia',
     hours: [
       { days: 'Mon - Fri', times: '9:00 AM - 6:00 PM' },
@@ -210,7 +210,7 @@ const ContactUs = () => {
               <p className="text-sm text-gray-600 mb-4">Reach out directly or visit our main branch during business hours.</p>
 
               <ul className="space-y-4">
-                <li className="flex items-start gap-3">
+                {/* <li className="flex items-start gap-3">
                   <span className="flex-none bg-primary/10 text-primary p-2 rounded-lg">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M3 5a2 2 0 0 1 2-2h2.2a2 2 0 0 1 1.6.8L12 8l3.2-4.2A2 2 0 0 1 16.8 2H19a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z" fill="currentColor"/></svg>
                   </span>
@@ -218,7 +218,7 @@ const ContactUs = () => {
                     <p className="text-sm font-medium text-gray-800">Address</p>
                     <p className="text-sm text-gray-600">{contactDetails.address}</p>
                   </div>
-                </li>
+                </li> */}
 
                 {/* <li className="flex items-start gap-3">
                   <span className="flex-none bg-primary/10 text-primary p-2 rounded-lg">
