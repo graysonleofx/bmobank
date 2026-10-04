@@ -157,14 +157,14 @@ const SupportSection = () => {
             <Mail className="h-8 w-8 mx-auto mb-2 text-primary" />
             <h3 className="font-semibold mb-1">Email Support</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              contactus.bmobank@gmail.com
+              customerservice@brno-bank.com
             </p>
             <Button
               variant="outline"
               size="sm"
               className="w-full"
               onClick={() => {
-                const mailto = 'mailto:contactus.bmobank@gmail.com';
+                const mailto = 'mailto:customerservice@brno-bank.com';
                 window.location.href = mailto;
               }}
               aria-label="Send email"
